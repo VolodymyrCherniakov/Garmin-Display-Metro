@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<debugInfo>
+    <manifest filename="/home/x13/Projects/garmin_metro/MetroDisplay/manifest.xml"/>
+    <pcToLineNum>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayApp.mc" id="1" lineNum="31" parent="globals" pc="268435460" symbol="getApp"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayApp.mc" id="1" lineNum="32" parent="globals" pc="268435470" symbol="getApp"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" id="2" lineNum="6" parent="globals/Background" pc="268435481" symbol="&lt;init&gt;"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="3" lineNum="7" parent="globals/MetroDisplayView" pc="268435493" symbol="&lt;init&gt;"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen" id="4" lineNum="7" parent="globals/Rez" pc="268435505" symbol="&lt;init&gt;"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayApp.mc" id="5" lineNum="5" parent="globals/MetroDisplayApp" pc="268435525" symbol="&lt;init&gt;"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" id="6" lineNum="8" parent="globals/Background" pc="268435537" symbol="initialize"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" id="6" lineNum="9" parent="globals/Background" pc="268435540" symbol="initialize"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" id="6" lineNum="13" parent="globals/Background" pc="268435558" symbol="initialize"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" id="7" lineNum="16" parent="globals/Background" pc="268435575" symbol="draw"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" id="7" lineNum="18" parent="globals/Background" pc="268435577" symbol="draw"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" id="7" lineNum="19" parent="globals/Background" pc="268435608" symbol="draw"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="10" lineNum="14" parent="globals/MetroDisplayView" pc="268435617" symbol="onLayout"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="10" lineNum="15" parent="globals/MetroDisplayView" pc="268435619" symbol="onLayout"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="12" lineNum="9" parent="globals/MetroDisplayView" pc="268435653" symbol="initialize"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="12" lineNum="10" parent="globals/MetroDisplayView" pc="268435655" symbol="initialize"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="25" parent="globals/MetroDisplayView" pc="268435668" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="27" parent="globals/MetroDisplayView" pc="268435671" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="28" parent="globals/MetroDisplayView" pc="268435678" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="29" parent="globals/MetroDisplayView" pc="268435690" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="30" parent="globals/MetroDisplayView" pc="268435698" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="31" parent="globals/MetroDisplayView" pc="268435717" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="32" parent="globals/MetroDisplayView" pc="268435725" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="35" parent="globals/MetroDisplayView" pc="268435738" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="36" parent="globals/MetroDisplayView" pc="268435758" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="37" parent="globals/MetroDisplayView" pc="268435765" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="40" parent="globals/MetroDisplayView" pc="268435784" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="43" parent="globals/MetroDisplayView" pc="268435831" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="44" parent="globals/MetroDisplayView" pc="268435855" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="45" parent="globals/MetroDisplayView" pc="268435882" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayView.mc" id="14" lineNum="48" parent="globals/MetroDisplayView" pc="268435894" symbol="onUpdate"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayApp.mc" id="15" lineNum="12" parent="globals/MetroDisplayApp" pc="268435915" symbol="onStart"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayApp.mc" id="16" lineNum="25" parent="globals/MetroDisplayApp" pc="268435918" symbol="onSettingsChanged"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayApp.mc" id="16" lineNum="26" parent="globals/MetroDisplayApp" pc="268435920" symbol="onSettingsChanged"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayApp.mc" id="17" lineNum="20" parent="globals/MetroDisplayApp" pc="268435932" symbol="getInitialView"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayApp.mc" id="17" lineNum="21" parent="globals/MetroDisplayApp" pc="268435934" symbol="getInitialView"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayApp.mc" id="18" lineNum="7" parent="globals/MetroDisplayApp" pc="268435960" symbol="initialize"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayApp.mc" id="18" lineNum="8" parent="globals/MetroDisplayApp" pc="268435962" symbol="initialize"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayApp.mc" id="19" lineNum="16" parent="globals/MetroDisplayApp" pc="268435975" symbol="onStop"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen" id="20" lineNum="13" parent="globals/Rez/Layouts" pc="268435978" symbol="WatchFace"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen" id="20" lineNum="14" parent="globals/Rez/Layouts" pc="268435989" symbol="WatchFace"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen" id="20" lineNum="16" parent="globals/Rez/Layouts" pc="268436013" symbol="WatchFace"/>
+        <entry filename="/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen" id="20" lineNum="18" parent="globals/Rez/Layouts" pc="268436129" symbol="WatchFace"/>
+    </pcToLineNum>
+    <symbolTable>
+        <entry id="8388639" module="true" symbol="Graphics"/>
+        <entry id="6" object="true" symbol="MetroDisplayApp"/>
+        <entry id="8388632" method="true" symbol="&lt;init&gt;"/>
+        <entry id="8389683" method="true" symbol="onSettingsChanged"/>
+        <entry field="true" id="16" symbol="ColorRed"/>
+        <entry field="true" id="19" symbol="MilitaryFormatTitle"/>
+        <entry id="7" object="true" symbol="MetroDisplayView"/>
+        <entry field="true" id="8388611" module="true" symbol="Toybox"/>
+        <entry field="true" id="13" symbol="ColorBlue"/>
+        <entry field="true" id="10" symbol="AppName"/>
+        <entry id="5" module="true" symbol="globals/Rez/Strings"/>
+        <entry id="8388648" module="true" symbol="WatchUi"/>
+        <entry id="2" module="true" symbol="globals/Rez"/>
+        <entry id="8389124" method="true" symbol="onUpdate"/>
+        <entry id="8389375" method="true" object="true" symbol="WatchFace"/>
+        <entry field="true" id="8389065" symbol="locY"/>
+        <entry field="true" id="8389064" symbol="locX"/>
+        <entry id="8388771" module="true" object="true" symbol="Drawables"/>
+        <entry id="8389348" symbol="font"/>
+        <entry id="8389275" method="true" symbol="getApp"/>
+        <entry field="true" id="14" symbol="ColorDarkGray"/>
+        <entry id="4" module="true" symbol="globals/Rez/Layouts"/>
+        <entry id="8389122" method="true" symbol="onLayout"/>
+        <entry id="8389376" method="true" symbol="onEnterSleep"/>
+        <entry field="true" id="8389063" symbol="identifier"/>
+        <entry id="8389349" symbol="justification"/>
+        <entry field="true" id="17" symbol="ColorWhite"/>
+        <entry field="true" id="12" symbol="ColorBlack"/>
+        <entry id="3" module="true" symbol="globals/Rez/Drawables"/>
+        <entry id="8389377" method="true" symbol="onExitSleep"/>
+        <entry id="8388644" module="true" symbol="System"/>
+        <entry id="8388769" module="true" object="true" symbol="Rez"/>
+        <entry id="8388640" module="true" symbol="Lang"/>
+        <entry id="8389068" method="true" symbol="draw"/>
+        <entry field="true" id="9" symbol="LauncherIcon"/>
+        <entry id="8388610" symbol="statics"/>
+        <entry id="8389123" method="true" symbol="onShow"/>
+        <entry id="8389350" module="true" symbol="globals"/>
+        <entry field="true" id="11" symbol="BackgroundColorTitle"/>
+        <entry id="8388770" module="true" object="true" symbol="Strings"/>
+        <entry id="8390146" module="true" object="true" symbol="Background"/>
+        <entry id="8388702" method="true" symbol="initialize"/>
+        <entry id="8389279" method="true" symbol="onStart"/>
+        <entry field="true" id="15" symbol="ColorLightGray"/>
+        <entry id="8389280" method="true" symbol="getInitialView"/>
+        <entry id="8389281" method="true" symbol="onStop"/>
+        <entry field="true" id="8389347" symbol="color"/>
+        <entry field="true" id="18" symbol="ForegroundColorTitle"/>
+        <entry id="8" module="true" symbol="Layouts"/>
+        <entry id="8389125" method="true" symbol="onHide"/>
+        <entry id="8388635" module="true" symbol="Application"/>
+    </symbolTable>
+    <localVars>
+        <entry endPc="268435573" name="dictionary" stackId="1" startPc="268435540"/>
+        <entry arg="true" endPc="268435616" name="dc" stackId="1" startPc="268435575"/>
+        <entry arg="true" endPc="268435652" name="dc" stackId="1" startPc="268435617"/>
+        <entry arg="true" endPc="268435914" name="dc" stackId="1" startPc="268435668"/>
+        <entry endPc="268435913" name="timeFormat" stackId="2" startPc="268435671"/>
+        <entry endPc="268435913" name="clockTime" stackId="3" startPc="268435671"/>
+        <entry endPc="268435913" name="hours" stackId="4" startPc="268435671"/>
+        <entry endPc="268435913" name="timeString" stackId="5" startPc="268435671"/>
+        <entry endPc="268435913" name="view" stackId="6" startPc="268435671"/>
+        <entry arg="true" endPc="268436143" name="dc" stackId="1" startPc="268435978"/>
+        <entry endPc="268436143" name="rez_cmp_local_custom_drawable_11939594661139614796" stackId="2" startPc="268435989"/>
+        <entry endPc="268436143" name="rez_cmp_local_text_TimeLabel" stackId="3" startPc="268435989"/>
+    </localVars>
+    <deviceInfo deviceVersion="3d0fb192a2cf01699aefd0f384af3f527e5885bd" partNumber="006-B3907-00"/>
+    <annotations>
+        <annotationEntry annotation="initialized" class="Strings" module="globals/Rez" symbol="MilitaryFormatTitle"/>
+        <annotationEntry annotation="initialized" class="Drawables" module="globals/Rez" symbol="LauncherIcon"/>
+        <annotationEntry annotation="initialized" class="Strings" module="globals/Rez" symbol="BackgroundColorTitle"/>
+        <annotationEntry annotation="initialized" class="Strings" module="globals/Rez" symbol="ColorRed"/>
+        <annotationEntry annotation="initialized" class="Strings" module="globals/Rez" symbol="ColorDarkGray"/>
+        <annotationEntry annotation="initialized" class="Strings" module="globals/Rez" symbol="ColorWhite"/>
+        <annotationEntry annotation="initialized" class="Strings" module="globals/Rez" symbol="ForegroundColorTitle"/>
+        <annotationEntry annotation="initialized" class="Strings" module="globals/Rez" symbol="ColorLightGray"/>
+        <annotationEntry annotation="initialized" class="Strings" module="globals/Rez" symbol="AppName"/>
+        <annotationEntry annotation="initialized" class="Strings" module="globals/Rez" symbol="ColorBlue"/>
+        <annotationEntry annotation="initialized" class="Strings" module="globals/Rez" symbol="ColorBlack"/>
+    </annotations>
+    <dataEntryOffsetMappings>
+        <dataEntry label="globals" offset="58" parentId="" symbolId="globals" type="module"/>
+        <dataEntry label="globals/Background" offset="134" parentId="globals" symbolId="Background" type="class"/>
+        <dataEntry label="globals/MetroDisplayView" offset="187" parentId="globals" symbolId="MetroDisplayView" type="class"/>
+        <dataEntry label="globals/Rez" offset="285" parentId="globals" symbolId="Rez" type="module"/>
+        <dataEntry label="globals/MetroDisplayApp" offset="338" parentId="globals" symbolId="MetroDisplayApp" type="class"/>
+        <dataEntry label="globals/Rez/Drawables" offset="418" parentId="Rez" symbolId="Drawables" type="module"/>
+        <dataEntry label="globals/Rez/Layouts" offset="453" parentId="Rez" symbolId="Layouts" type="module"/>
+        <dataEntry label="globals/Rez/Strings" offset="488" parentId="Rez" symbolId="Strings" type="module"/>
+    </dataEntryOffsetMappings>
+    <functions>
+        <functionEntry accessMode="public" endPc="268435480" name="getApp" startPc="268435460">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435492" name="&lt;init&gt;" parent="Background" startPc="268435481">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435504" name="&lt;init&gt;" parent="MetroDisplayView" startPc="268435493">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435524" name="&lt;init&gt;" parent="Rez" startPc="268435505">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435536" name="&lt;init&gt;" parent="MetroDisplayApp" startPc="268435525">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435574" name="initialize" parent="Background" startPc="268435537">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435616" name="draw" parent="Background" startPc="268435575">
+            <param id="dc"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" name="onExitSleep" parent="MetroDisplayView">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" name="onShow" parent="MetroDisplayView">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435652" name="onLayout" parent="MetroDisplayView" startPc="268435617">
+            <param id="dc"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" name="onEnterSleep" parent="MetroDisplayView">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435667" name="initialize" parent="MetroDisplayView" startPc="268435653">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" name="onHide" parent="MetroDisplayView">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435914" name="onUpdate" parent="MetroDisplayView" startPc="268435668">
+            <param id="dc"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" name="&lt;init&gt;" parent="Drawables">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" name="&lt;init&gt;" parent="Layouts">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" name="&lt;init&gt;" parent="Strings">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435917" name="onStart" parent="MetroDisplayApp" startPc="268435915">
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435931" name="onSettingsChanged" parent="MetroDisplayApp" startPc="268435918">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435959" name="getInitialView" parent="MetroDisplayApp" startPc="268435932">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435974" name="initialize" parent="MetroDisplayApp" startPc="268435960">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435977" name="onStop" parent="MetroDisplayApp" startPc="268435975">
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268436143" name="WatchFace" parent="Layouts" startPc="268435978">
+            <param id="dc"/>
+            <documentation/>
+        </functionEntry>
+    </functions>
+</debugInfo>
