@@ -22,4 +22,12 @@
         <settingConfig type="boolean" />
     </setting>
 
+    <setting propertyKey="@Properties.SunlightMode" title="@Strings.SunlightModeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.SunlightAuto</listEntry>
+            <listEntry value="1">@Strings.SunlightLit</listEntry>
+            <listEntry value="2">@Strings.SunlightDark</listEntry>
+        </settingConfig>
+    </setting>
+
 </settings>

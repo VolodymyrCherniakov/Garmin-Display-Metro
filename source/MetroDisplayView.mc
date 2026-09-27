@@ -4,11 +4,14 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
+import Toybox.Position;
 import Toybox.WatchUi;
+import Toybox.Weather;
 
 //! MetroDisplayView
 //! Post-apocalyptic Nixie tube watch face inspired by Metro 2033 / Artyom's wristwatch.
-//! Features glowing neon-amber Nixie tubes, unlit cathode ghost filaments,
+//! Features scaled-down glowing neon-amber Nixie tubes, Artyom's top horizontal blue
+//! neon sunlight/ambient indicator tube, unlit cathode ghost filaments,
 //! industrial PCB circuit background with vias, military silkscreen, and
 //! Geiger dosimeter / battery complications.
 class MetroDisplayView extends WatchUi.WatchFace {
@@ -19,20 +22,20 @@ class MetroDisplayView extends WatchUi.WatchFace {
     private var _centerX as Lang.Number = 140;
     private var _centerY as Lang.Number = 140;
 
-    // Nixie tube layout coordinates
-    private var _tubeW as Lang.Number = 44;
-    private var _tubeH as Lang.Number = 92;
-    private var _tubeY as Lang.Number = 94;
-    private var _tubeXs as Lang.Array<Lang.Number> = [36, 86, 150, 200];
+    // Scaled Nixie tube layout coordinates
+    private var _tubeW as Lang.Number = 34;
+    private var _tubeH as Lang.Number = 74;
+    private var _tubeY as Lang.Number = 105;
+    private var _tubeXs as Lang.Array<Lang.Number> = [54, 94, 152, 192];
 
     // State
     private var _isSleepMode as Lang.Boolean = false;
+    private var _debugSunlight as Lang.Boolean = false; // Interactive debug flag (default: true)
 
-    // Nixie tube color palette
-    // Core glowing colors (optimized for 64-color MIP display and high-color simulators)
+    // Nixie tube color palette (Orange-Amber Glow)
     private const COLOR_HALO_OUTER      = 0x882200; // Deep glowing red-orange plasma halo
     private const COLOR_GLOW_MID        = 0xFF5500; // Bright neon orange (Graphics.COLOR_ORANGE)
-    private const COLOR_CORE_HOT        = 0xFFFF66; // White-hot filament center (or 0xFFAA00)
+    private const COLOR_CORE_HOT        = 0xFFFF66; // White-hot filament center
     private const COLOR_GHOST_FILAMENT  = 0x22140A; // Dim unlit cathode wire in background
     private const COLOR_TUBE_GLASS_BG   = 0x0A0D0B; // Deep dark cavity inside tube
     private const COLOR_TUBE_BORDER     = 0x38423E; // Outer glass capsule rim
@@ -40,6 +43,17 @@ class MetroDisplayView extends WatchUi.WatchFace {
     private const COLOR_MESH_GRID       = 0x1A221C; // Anode wire mesh grid
     private const COLOR_SOCKET_BASE     = 0x1F2426; // Stamped metal socket base
     private const COLOR_SOCKET_BORDER   = 0x101314; // Socket outline
+
+    // Top Sunlight / Ambient Light Blue Neon Tube Palette (Metro Stealth Sensor)
+    private const COLOR_SUN_HALO        = 0x004488; // Deep electric cobalt glow bloom
+    private const COLOR_SUN_GLOW_MID    = 0x00AAFF; // Vibrant cyan neon beam
+    private const COLOR_SUN_CORE_HOT    = 0xEEFFFF; // White-hot ice-blue center filament
+    private const COLOR_SUN_OFF_BG      = 0x0A1014; // Dark transparent cavity when unlit
+    private const COLOR_SUN_OFF_RIM     = 0x2A343A; // Unlit transparent/grey glass border
+    private const COLOR_SUN_OFF_WIRE    = 0x222C32; // Unlit grey tungsten/cathode wire
+    private const COLOR_SUN_BRACKET     = 0x483A26; // Stamped copper/brass mounting bracket
+    private const COLOR_SUN_BRACKET_RIM = 0x2E2416; // Bracket outline
+    private const COLOR_SUN_RIVET       = 0x8C7040; // Copper rivets
 
     // PCB background colors
     private const COLOR_PCB_BG          = 0x08100C; // Dark industrial solder mask
@@ -70,17 +84,17 @@ class MetroDisplayView extends WatchUi.WatchFace {
         _centerX = _screenW / 2;
         _centerY = _screenH / 2;
 
-        // Position Nixie tubes centrally
-        // Total span of 4 tubes + colon = 208 px
-        _tubeW = 44;
-        _tubeH = 92;
-        _tubeY = _centerY - (_tubeH / 2); // 140 - 46 = 94
+        // Scaled-down Nixie tubes layout to give ample breathing room
+        _tubeW = 34;
+        _tubeH = 74;
+        _tubeY = 105;
 
+        // Symmetrical positioning with 54px left/right margins and central colon gap
         _tubeXs = [
-            _centerX - 104, // 140 - 104 = 36
-            _centerX - 54,  // 140 - 54  = 86
-            _centerX + 10,  // 140 + 10  = 150
-            _centerX + 60   // 140 + 60  = 200
+            54,  // Hour Tens
+            94,  // Hour Ones
+            152, // Minute Tens
+            192  // Minute Ones
         ];
     }
 
@@ -114,7 +128,14 @@ class MetroDisplayView extends WatchUi.WatchFace {
         // 1. Draw Industrial PCB Background
         drawPcbBackground(dc);
 
-        // 2. Fetch Time
+        // 2. Draw Top Ambient / Sunlight Indicator Neon Tube (Metro light sensor)
+        var isSunlit = isSunlitEnvironment();
+        drawTopSunlightTube(dc, isSunlit);
+
+        // 3. Draw Top Complication: Industrial Date Badge
+        drawDateBadge(dc);
+
+        // 4. Fetch Time
         var clockTime = System.getClockTime();
         var hours = clockTime.hour;
         var minutes = clockTime.min;
@@ -138,23 +159,208 @@ class MetroDisplayView extends WatchUi.WatchFace {
             hTens = -1;
         }
 
-        // 3. Draw 4 Nixie Glass Tubes with Glowing Digits
+        // 5. Draw 4 Scaled Nixie Glass Tubes with Glowing Digits
         var digits = [hTens, hOnes, mTens, mOnes];
         for (var i = 0; i < 4; i++) {
             drawNixieTube(dc, _tubeXs[i], _tubeY, _tubeW, _tubeH, digits[i]);
         }
 
-        // 4. Draw Center Colon (INS-1 Neon Glow Indicator Lamps)
+        // 6. Draw Center Colon (INS-1 Neon Glow Indicator Lamps)
         drawColonIndicator(dc);
 
-        // 5. Draw Top Complication: Industrial Date Badge
-        drawDateBadge(dc);
-
-        // 6. Draw Bottom Complication: Geiger Dosimeter / Battery Gauge
+        // 7. Draw Bottom Complication: Geiger Dosimeter / Battery Gauge
         drawBatteryDosimeter(dc);
 
-        // 7. Outer Industrial Bezel Screws
+        // 8. Outer Industrial Bezel Screws
         drawChassisBolts(dc);
+    }
+
+    // =========================================================================
+    // SUNLIGHT / AMBIENT LIGHT DETECTION LOGIC
+    // =========================================================================
+
+    //! Toggle debug sunlight state (interactive simulator tap)
+    public function toggleDebugSunlight() as Void {
+        _debugSunlight = !_debugSunlight;
+        WatchUi.requestUpdate();
+    }
+
+    private function isSunlitEnvironment() as Lang.Boolean {
+        // 1. Check user setting / simulation toggle (0: Auto, 1: Always Lit, 2: Always Dark)
+        var mode = 0;
+        try {
+            if (Application has :Properties && Application.Properties has :getValue) {
+                var propVal = Application.Properties.getValue("SunlightMode");
+                if (propVal != null) {
+                    mode = propVal as Lang.Number;
+                }
+            } else {
+                var propVal = Application.getApp().getProperty("SunlightMode");
+                if (propVal != null) {
+                    mode = propVal as Lang.Number;
+                }
+            }
+        } catch (e) {
+            mode = 0;
+        }
+
+        if (mode == 1) {
+            return true; // Force Sunlit / Active from settings
+        } else if (mode == 2) {
+            return false; // Force Darkness / Stealth from settings
+        }
+
+        // 2. Interactive simulator tap / debug flag (default: true)
+        if (_debugSunlight != null) {
+            return _debugSunlight;
+        }
+
+        // 3. Astronomical Sunrise / Sunset calculation via Toybox.Weather
+        if (Toybox has :Weather && Weather has :getSunrise && Weather has :getSunset) {
+            try {
+                var conditions = Weather.getCurrentConditions();
+                if (conditions != null && conditions.observationLocationPosition != null) {
+                    var now = Time.now();
+                    var loc = conditions.observationLocationPosition as Position.Location;
+                    var sunrise = Weather.getSunrise(loc, now);
+                    var sunset = Weather.getSunset(loc, now);
+                    if (sunrise != null && sunset != null) {
+                        if (now.greaterThan(sunrise) && now.lessThan(sunset)) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                }
+            } catch (e) {
+                // Ignore and fall back to local clock
+            }
+        }
+
+        // 3. Fallback: Local Civil Daylight calculation (approx 06:30 - 19:30)
+        var clockTime = System.getClockTime();
+        var currentMinuteOfDay = (clockTime.hour * 60) + clockTime.min;
+        return (currentMinuteOfDay >= 390 && currentMinuteOfDay <= 1170);
+    }
+
+    // =========================================================================
+    // TOP SUNLIGHT / AMBIENT LIGHT INDICATOR TUBE (METRO ARTYOM SENSOR)
+    // =========================================================================
+
+    private function drawTopSunlightTube(dc as Graphics.Dc, isSunlit as Lang.Boolean) as Void {
+        var tubeW = 104;
+        var tubeH = 16;
+        var tubeX = _centerX - (tubeW / 2); // 140 - 52 = 88
+        var tubeY = 32;
+
+        var bracketW = 9;
+        var bracketH = 18;
+        var bracketY = tubeY - 1;
+
+        // 1. Metal mounting end brackets (Left and Right)
+        var leftBx = tubeX - 4;
+        var rightBx = tubeX + tubeW - bracketW + 4;
+
+        var bracketColor = isSunlit ? COLOR_SUN_BRACKET : 0x282624;
+        var bracketRim = isSunlit ? COLOR_SUN_BRACKET_RIM : 0x161618;
+        var rivetColor = isSunlit ? COLOR_SUN_RIVET : 0x48423A;
+
+        // Left bracket
+        dc.setColor(bracketColor, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(leftBx, bracketY, bracketW, bracketH, 2);
+        dc.setColor(bracketRim, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(1);
+        dc.drawRoundedRectangle(leftBx, bracketY, bracketW, bracketH, 2);
+        dc.setColor(rivetColor, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(leftBx + 3, bracketY + 4, 1);
+        dc.fillCircle(leftBx + 3, bracketY + bracketH - 4, 1);
+
+        // Right bracket
+        dc.setColor(bracketColor, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(rightBx, bracketY, bracketW, bracketH, 2);
+        dc.setColor(bracketRim, Graphics.COLOR_TRANSPARENT);
+        dc.drawRoundedRectangle(rightBx, bracketY, bracketW, bracketH, 2);
+        dc.setColor(rivetColor, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(rightBx + bracketW - 3, bracketY + 4, 1);
+        dc.fillCircle(rightBx + bracketW - 3, bracketY + bracketH - 4, 1);
+
+        // 2. Glass Tube Body
+        var glassX = tubeX;
+        var glassY = tubeY;
+        var glassW = tubeW;
+        var glassH = tubeH;
+        var cornerR = 7;
+
+        if (isSunlit) {
+            // --- SUNLIGHT / ACTIVE STATE (Bright Cyan Glow) ---
+
+            // Background internal plasma
+            dc.setColor(0x061D2B, Graphics.COLOR_TRANSPARENT);
+            dc.fillRoundedRectangle(glassX, glassY, glassW, glassH, cornerR);
+
+            // Outer Bloom Halo
+            dc.setColor(COLOR_SUN_HALO, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(5);
+            dc.drawRoundedRectangle(glassX, glassY, glassW, glassH, cornerR);
+
+            // Mid Glow on Glass Capsule Rim
+            dc.setColor(COLOR_SUN_GLOW_MID, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(2);
+            dc.drawRoundedRectangle(glassX, glassY, glassW, glassH, cornerR);
+
+            // Internal horizontal cathode wire filament
+            var wireY = glassY + (glassH / 2);
+            var wireX1 = glassX + bracketW - 2;
+            var wireX2 = glassX + glassW - bracketW + 2;
+
+            // Halo pass on wire
+            dc.setColor(COLOR_SUN_HALO, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(6);
+            dc.drawLine(wireX1, wireY, wireX2, wireY);
+
+            // Mid neon cyan beam
+            dc.setColor(COLOR_SUN_GLOW_MID, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(3);
+            dc.drawLine(wireX1, wireY, wireX2, wireY);
+
+            // Center sensor coiled filament element
+            dc.drawCircle(_centerX, wireY, 4);
+
+            // White-hot core wire
+            dc.setColor(COLOR_SUN_CORE_HOT, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(1);
+            dc.drawLine(wireX1, wireY, wireX2, wireY);
+            dc.drawCircle(_centerX, wireY, 2);
+
+            // Glass specular reflection highlight (top shoulder)
+            dc.setColor(0xAAEEFF, Graphics.COLOR_TRANSPARENT);
+            dc.drawLine(glassX + 12, glassY + 2, glassX + glassW - 12, glassY + 2);
+        } else {
+            // --- DARK / UNLIT STEALTH STATE ---
+
+            // Dark smoked glass
+            dc.setColor(COLOR_SUN_OFF_BG, Graphics.COLOR_TRANSPARENT);
+            dc.fillRoundedRectangle(glassX, glassY, glassW, glassH, cornerR);
+
+            // Dim translucent rim
+            dc.setColor(COLOR_SUN_OFF_RIM, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(1);
+            dc.drawRoundedRectangle(glassX, glassY, glassW, glassH, cornerR);
+
+            // Unlit internal tungsten wire
+            var wireYOff = glassY + (glassH / 2);
+            var wireX1Off = glassX + bracketW - 2;
+            var wireX2Off = glassX + glassW - bracketW + 2;
+
+            dc.setColor(COLOR_SUN_OFF_WIRE, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(1);
+            dc.drawLine(wireX1Off, wireYOff, wireX2Off, wireYOff);
+            dc.drawCircle(_centerX, wireYOff, 2);
+
+            // Faint glass reflection
+            dc.setColor(0x182834, Graphics.COLOR_TRANSPARENT);
+            dc.drawLine(glassX + 14, glassY + 2, glassX + glassW - 14, glassY + 2);
+        }
     }
 
     // =========================================================================
@@ -172,23 +378,27 @@ class MetroDisplayView extends WatchUi.WatchFace {
 
         // Top-left traces
         dc.drawLine(24, 60, 50, 60);
-        dc.drawLine(50, 60, 68, 78);
-        dc.drawLine(68, 78, 68, 88);
+        dc.drawLine(50, 60, 64, 74);
+        dc.drawLine(64, 74, 64, 98);
 
         // Top-right traces
         dc.drawLine(256, 60, 230, 60);
-        dc.drawLine(230, 60, 212, 78);
-        dc.drawLine(212, 78, 212, 88);
+        dc.drawLine(230, 60, 216, 74);
+        dc.drawLine(216, 74, 216, 98);
+
+        // Top tube feeder traces
+        dc.drawLine(80, 22, 80, 31);
+        dc.drawLine(200, 22, 200, 31);
 
         // Bottom-left traces
         dc.drawLine(24, 220, 54, 220);
         dc.drawLine(54, 220, 72, 202);
-        dc.drawLine(72, 202, 72, 192);
+        dc.drawLine(72, 202, 72, 188);
 
         // Bottom-right traces
         dc.drawLine(256, 220, 226, 220);
         dc.drawLine(226, 220, 208, 202);
-        dc.drawLine(208, 202, 208, 192);
+        dc.drawLine(208, 202, 208, 188);
 
         // Side bus traces
         dc.drawLine(18, 120, 28, 130);
@@ -199,9 +409,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
         dc.drawLine(252, 130, 252, 150);
         dc.drawLine(252, 150, 262, 160);
 
-        // Upper and lower center traces
-        dc.drawLine(108, 32, 108, 44);
-        dc.drawLine(172, 32, 172, 44);
+        // Center bottom traces
         dc.drawLine(96, 248, 110, 248);
         dc.drawLine(110, 248, 120, 238);
         dc.drawLine(184, 248, 170, 248);
@@ -210,10 +418,10 @@ class MetroDisplayView extends WatchUi.WatchFace {
         // Solder Vias (copper contact ring with drill hole)
         var viaCoords = [
             [50, 60], [230, 60],
+            [80, 22], [200, 22],
             [54, 220], [226, 220],
             [28, 130], [28, 150],
             [252, 130], [252, 150],
-            [108, 44], [172, 44],
             [120, 238], [160, 238]
         ];
 
@@ -231,16 +439,16 @@ class MetroDisplayView extends WatchUi.WatchFace {
         dc.setPenWidth(1);
 
         // Horizontal bus guide lines
-        dc.drawLine(86, 84, 194, 84);
-        dc.drawLine(86, 196, 194, 196);
+        dc.drawLine(86, 94, 194, 94);
+        dc.drawLine(86, 188, 194, 188);
 
         // Fiducial crosshairs (+)
         drawFiducial(dc, 20, 140);
         drawFiducial(dc, 260, 140);
-        drawFiducial(dc, 140, 26);
+        drawFiducial(dc, 140, 18);
 
         // Micro silkscreen text
-        dc.drawText(140, 74, Graphics.FONT_SYSTEM_XTINY, "METRO D-6 · DISP-01", Graphics.TEXT_JUSTIFY_CENTER);
+        dc.drawText(140, 80, Graphics.FONT_SYSTEM_XTINY, "METRO D-6 · DISP-01", Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     private function drawFiducial(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number) as Void {
@@ -263,45 +471,45 @@ class MetroDisplayView extends WatchUi.WatchFace {
     ) as Void {
         // 1. Metal base socket at bottom
         dc.setColor(COLOR_SOCKET_BASE, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(x + 4, y + h - 4, w - 8, 8, 3);
+        dc.fillRoundedRectangle(x + 3, y + h - 3, w - 6, 6, 2);
         dc.setColor(COLOR_SOCKET_BORDER, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        dc.drawRoundedRectangle(x + 4, y + h - 4, w - 8, 8, 3);
+        dc.drawRoundedRectangle(x + 3, y + h - 3, w - 6, 6, 2);
 
         // 2. Glass Tube Body: Dark interior
         dc.setColor(COLOR_TUBE_GLASS_BG, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(x, y, w, h, 10);
+        dc.fillRoundedRectangle(x, y, w, h, 8);
 
         // 3. Wire Anode Mesh Grid (Crosshatch pattern inside the tube)
         dc.setColor(COLOR_MESH_GRID, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        for (var my = y + 10; my < y + h - 8; my += 7) {
-            dc.drawLine(x + 5, my, x + w - 5, my);
+        for (var my = y + 8; my < y + h - 6; my += 6) {
+            dc.drawLine(x + 4, my, x + w - 4, my);
         }
-        for (var mx = x + 7; mx < x + w - 5; mx += 6) {
-            dc.drawLine(mx, y + 10, mx, y + h - 8);
+        for (var mx = x + 5; mx < x + w - 4; mx += 5) {
+            dc.drawLine(mx, y + 8, mx, y + h - 6);
         }
 
         // 4. Glass Capsule Border
         dc.setColor(COLOR_TUBE_BORDER, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
-        dc.drawRoundedRectangle(x, y, w, h, 10);
+        dc.drawRoundedRectangle(x, y, w, h, 8);
 
         // 5. Unlit Ghost Filament (Cathode wire stack depth - always subtle 8)
         dc.setColor(COLOR_GHOST_FILAMENT, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(2);
+        dc.setPenWidth(1);
         drawNixieDigitWire(dc, x, y, w, h, 8);
 
         // 6. Glowing Active Digit Filament (Multi-pass glow)
         if (digit >= 0) {
             // Pass 1: Outer glowing plasma halo
             dc.setColor(COLOR_HALO_OUTER, Graphics.COLOR_TRANSPARENT);
-            dc.setPenWidth(6);
+            dc.setPenWidth(4);
             drawNixieDigitWire(dc, x, y, w, h, digit);
 
             // Pass 2: Vibrant neon-orange glow
             dc.setColor(COLOR_GLOW_MID, Graphics.COLOR_TRANSPARENT);
-            dc.setPenWidth(3);
+            dc.setPenWidth(2);
             drawNixieDigitWire(dc, x, y, w, h, digit);
 
             // Pass 3: White-hot core wire
@@ -313,11 +521,11 @@ class MetroDisplayView extends WatchUi.WatchFace {
         // 7. Glass Specular Reflections (Left edge highlight streak and top shoulder)
         dc.setColor(COLOR_TUBE_HIGHLIGHT, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        dc.drawLine(x + 3, y + 14, x + 3, y + h - 14);
-        dc.drawArc(x + 10, y + 10, 7, Graphics.ARC_CLOCKWISE, 180, 90);
+        dc.drawLine(x + 2, y + 10, x + 2, y + h - 10);
+        dc.drawArc(x + 8, y + 8, 5, Graphics.ARC_CLOCKWISE, 180, 90);
     }
 
-    //! Render bent wire cathode digits (IN-14 / Russian Nixie tube geometry)
+    //! Render bent wire cathode digits (scaled geometry)
     private function drawNixieDigitWire(
         dc as Graphics.Dc,
         x0 as Lang.Number,
@@ -326,30 +534,30 @@ class MetroDisplayView extends WatchUi.WatchFace {
         h as Lang.Number,
         digit as Lang.Number
     ) as Void {
-        var xl = x0 + 7;
-        var xr = x0 + w - 7;
+        var xl = x0 + 5;
+        var xr = x0 + w - 5;
         var xm = x0 + (w / 2);
-        var yt = y0 + 12;
-        var yb = y0 + h - 12;
+        var yt = y0 + 9;
+        var yb = y0 + h - 9;
         var ym = y0 + (h / 2);
-        var r  = (xr - xl) / 2; // 15
+        var r  = (xr - xl) / 2; // 12
 
         switch (digit) {
             case 0:
-                dc.drawRoundedRectangle(xl, yt, xr - xl, yb - yt, 14);
+                dc.drawRoundedRectangle(xl, yt, xr - xl, yb - yt, 10);
                 break;
 
             case 1:
-                dc.drawLine(xm + 2, yt, xm + 2, yb);
-                dc.drawLine(xl + 2, yt + 12, xm + 2, yt);
-                dc.drawLine(xm - 8, yb, xm + 10, yb);
+                dc.drawLine(xm + 1, yt, xm + 1, yb);
+                dc.drawLine(xl + 1, yt + 10, xm + 1, yt);
+                dc.drawLine(xm - 6, yb, xm + 8, yb);
                 break;
 
             case 2:
                 dc.drawArc(xm, yt + r, r, Graphics.ARC_CLOCKWISE, 180, 0);
                 dc.drawLine(xr, yt + r, xl, yb);
                 dc.drawLine(xl, yb, xr, yb);
-                dc.drawLine(xr, yb, xr, yb - 6);
+                dc.drawLine(xr, yb, xr, yb - 5);
                 break;
 
             case 3:
@@ -360,9 +568,9 @@ class MetroDisplayView extends WatchUi.WatchFace {
                 break;
 
             case 4:
-                dc.drawLine(xr - 4, yt, xr - 4, yb);
-                dc.drawLine(xr - 4, yt, xl, ym + 4);
-                dc.drawLine(xl, ym + 4, xr, ym + 4);
+                dc.drawLine(xr - 3, yt, xr - 3, yb);
+                dc.drawLine(xr - 3, yt, xl, ym + 3);
+                dc.drawLine(xl, ym + 3, xr, ym + 3);
                 break;
 
             case 5:
@@ -374,13 +582,13 @@ class MetroDisplayView extends WatchUi.WatchFace {
 
             case 6:
                 dc.drawCircle(xm, yb - r, r);
-                dc.drawLine(xr - 4, yt + 2, xl, yb - r);
+                dc.drawLine(xr - 3, yt + 2, xl, yb - r);
                 break;
 
             case 7:
                 dc.drawLine(xl, yt, xr, yt);
-                dc.drawLine(xr, yt, xl + 4, yb);
-                dc.drawLine(xm - 6, ym, xm + 6, ym);
+                dc.drawLine(xr, yt, xl + 3, yb);
+                dc.drawLine(xm - 5, ym, xm + 5, ym);
                 break;
 
             case 8:
@@ -390,7 +598,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
 
             case 9:
                 dc.drawCircle(xm, yt + r, r);
-                dc.drawLine(xr, yt + r, xl + 4, yb);
+                dc.drawLine(xr, yt + r, xl + 3, yb);
                 break;
         }
     }
@@ -401,8 +609,8 @@ class MetroDisplayView extends WatchUi.WatchFace {
 
     private function drawColonIndicator(dc as Graphics.Dc) as Void {
         var colonX = _centerX;
-        var dotY1 = _centerY - 16; // 124
-        var dotY2 = _centerY + 16; // 156
+        var dotY1 = 129;
+        var dotY2 = 153;
 
         var bulbYCoords = [dotY1, dotY2];
         for (var i = 0; i < 2; i++) {
@@ -410,14 +618,14 @@ class MetroDisplayView extends WatchUi.WatchFace {
 
             // Miniature glass capsule
             dc.setColor(COLOR_TUBE_GLASS_BG, Graphics.COLOR_TRANSPARENT);
-            dc.fillRoundedRectangle(colonX - 4, cy - 8, 8, 16, 4);
+            dc.fillRoundedRectangle(colonX - 4, cy - 7, 8, 14, 3);
             dc.setColor(COLOR_TUBE_BORDER, Graphics.COLOR_TRANSPARENT);
             dc.setPenWidth(1);
-            dc.drawRoundedRectangle(colonX - 4, cy - 8, 8, 16, 4);
+            dc.drawRoundedRectangle(colonX - 4, cy - 7, 8, 14, 3);
 
             // Glowing neon core dot
             dc.setColor(COLOR_HALO_OUTER, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(colonX, cy, 4);
+            dc.fillCircle(colonX, cy, 3);
             dc.setColor(COLOR_GLOW_MID, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(colonX, cy, 2);
             dc.setColor(COLOR_CORE_HOT, Graphics.COLOR_TRANSPARENT);
@@ -425,7 +633,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
 
             // Specular reflection
             dc.setColor(COLOR_TUBE_HIGHLIGHT, Graphics.COLOR_TRANSPARENT);
-            dc.drawPoint(colonX - 2, cy - 4);
+            dc.drawPoint(colonX - 2, cy - 3);
         }
     }
 
@@ -442,10 +650,10 @@ class MetroDisplayView extends WatchUi.WatchFace {
         var month = dateInfo.month;
         var dateString = Lang.format("$1$ · $2$ $3$", [dayOfWeek, day, month]).toUpper();
 
-        var badgeW = 130;
-        var badgeH = 22;
+        var badgeW = 120;
+        var badgeH = 20;
         var badgeX = _centerX - (badgeW / 2);
-        var badgeY = 48;
+        var badgeY = 56;
 
         // Dark stamped metal plate
         dc.setColor(COLOR_DATE_BG, Graphics.COLOR_TRANSPARENT);
@@ -458,11 +666,11 @@ class MetroDisplayView extends WatchUi.WatchFace {
 
         // Small radiation hazard marker (gold triangle)
         dc.setColor(0xFFAA00, Graphics.COLOR_TRANSPARENT);
-        var tx = badgeX + 7;
-        var ty = badgeY + 11;
+        var tx = badgeX + 6;
+        var ty = badgeY + 10;
         dc.fillPolygon([
             [tx, ty - 4],
-            [tx + 6, ty],
+            [tx + 5, ty],
             [tx, ty + 4]
         ]);
 
@@ -492,7 +700,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
         var barW = 120;
         var barH = 12;
         var barX = _centerX - (barW / 2);
-        var barY = 212;
+        var barY = 204;
 
         // Dosimeter tube housing
         dc.setColor(COLOR_DATE_BG, Graphics.COLOR_TRANSPARENT);
@@ -539,7 +747,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
         dc.setColor(COLOR_DATE_TEXT, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             _centerX,
-            barY + barH + 6,
+            barY + barH + 5,
             Graphics.FONT_SYSTEM_XTINY,
             batString,
             Graphics.TEXT_JUSTIFY_CENTER

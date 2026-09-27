@@ -68,20 +68,48 @@
     "configMin" : null,
     "configMax" : null,
     "configMaxLength" : null
+  }, {
+    "key" : "SunlightMode",
+    "valueType" : "number",
+    "defaultValue" : 0,
+    "configTitle" : "SunlightModeTitle",
+    "configPrompt" : null,
+    "configType" : "list",
+    "configError" : null,
+    "configHelpUrl" : null,
+    "configReadonly" : false,
+    "configRequired" : false,
+    "configOptions" : [ {
+      "display" : "SunlightAuto",
+      "value" : 0
+    }, {
+      "display" : "SunlightLit",
+      "value" : 1
+    }, {
+      "display" : "SunlightDark",
+      "value" : 2
+    } ],
+    "configMin" : null,
+    "configMax" : null,
+    "configMaxLength" : null
   } ],
   "supportsLiveValidation" : false,
   "languages" : {
     "valyrian" : {
       "ColorLightGray" : "Light Gray",
       "ColorBlue" : "Blue",
-      "ColorRed" : "Red",
-      "ForegroundColorTitle" : "Foreground Color",
       "BackgroundColorTitle" : "Background Color",
       "ColorDarkGray" : "Dark Gray",
+      "SunlightDark" : "Simulate: In Darkness (Unlit)",
+      "SunlightModeTitle" : "Sunlight Tube Mode",
       "MilitaryFormatTitle" : "Military Format for 24 Hour Time",
       "ColorBlack" : "Black",
-      "ColorWhite" : "White",
-      "AppName" : "MetroDisplay"
+      "AppName" : "MetroDisplay",
+      "ColorRed" : "Red",
+      "ForegroundColorTitle" : "Foreground Color",
+      "SunlightLit" : "Simulate: In Sunlight (Lit)",
+      "SunlightAuto" : "Auto (Sunrise / Sunset)",
+      "ColorWhite" : "White"
     }
   }
 }

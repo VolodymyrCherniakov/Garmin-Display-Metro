@@ -18,7 +18,11 @@ class MetroDisplayApp extends Application.AppBase {
 
     // Return the initial view of your application here
     function getInitialView() as [Views] or [Views, InputDelegates] {
-        return [ new MetroDisplayView() ];
+        var view = new MetroDisplayView();
+        if (WatchUi has :WatchFaceDelegate) {
+            return [ view, new MetroDisplayDelegate(view) ];
+        }
+        return [ view ];
     }
 
     // New app settings have been received so trigger a UI update

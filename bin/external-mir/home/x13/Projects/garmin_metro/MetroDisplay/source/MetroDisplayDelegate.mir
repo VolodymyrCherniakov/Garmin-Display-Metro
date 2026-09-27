@@ -1,0 +1,54 @@
+[ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc"; @line = 1; @symbol_importdef<0> = [Toybox,1,7,13]; @symbol_importdef<1> = [Lang,1,14,18]; ]
+import Toybox.Lang;
+[ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc"; @line = 2; @symbol_importdef<0> = [Toybox,2,7,13]; @symbol_importdef<1> = [WatchUi,2,14,21]; ]
+import Toybox.WatchUi;
+//! MetroDisplayDelegate
+//! Handles user interaction events on the watch face (touchscreen press/tap)
+//! to toggle simulated sunlight states in the simulator and on device.
+[ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc"; @line = 7; @symbol_classdef = [MetroDisplayDelegate,7,6,26]; @symbol_extends<0> = [WatchUi,7,35,42]; @symbol_extends<1> = [WatchFaceDelegate,7,43,60]; ]
+class MetroDisplayDelegate extends WatchUi.WatchFaceDelegate {
+    [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc"; @line = 7; ]
+    <init> {
+    }
+    [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc"; @line = 7; ]
+    static
+    <init> {
+    }
+    [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc"; @line = 9; @position = 16; @symbol_vardef = [_view,9,16,21]; @symbol_type<0> = [MetroDisplayView,9,25,41]; ]
+    private
+    var _view as MetroDisplayView;
+    [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc"; @line = 11; @symbol_functiondef = [initialize,11,13,23]; @symbol_param<0> = [view,11,24,28]; @symbol_param<0>_type<0> = [MetroDisplayView,11,32,48]; ]
+    function initialize(view as MetroDisplayView) as Void {
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayDelegate_mc_11_50_14_4_start:
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc" 12 8 ]
+        symbol [ WatchFaceDelegate %tmp.2 12 8 25 ];
+        %tmp.2 = getv ? :WatchFaceDelegate;
+        symbol [ initialize %tmp.3 12 26 36 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc" 13 8 ]
+        %tmp.4 = lgetv %view;
+        symbol [ view %tmp.4 13 16 20 ];
+        symbol [ _view ? 13 8 13 ];
+        putv self :_view %tmp.4;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayDelegate_mc_11_50_14_4_stop:
+    }
+    //! Handle touch press on watch face screen
+    [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc"; @line = 17; @symbol_functiondef = [onPress,17,13,20]; @symbol_param<0> = [clickEvent,17,21,31]; @symbol_param<0>_type<0> = [WatchUi,17,35,42]; @symbol_param<0>_type<1> = [ClickEvent,17,43,53]; @symbol_return<0> = [Lang,17,58,62]; @symbol_return<1> = [Boolean,17,63,70]; ]
+    function onPress(clickEvent as WatchUi.ClickEvent) as Lang.Boolean {
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayDelegate_mc_17_71_20_4_start:
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc" 18 8 ]
+        symbol [ _view %tmp.2 18 8 13 ];
+        %tmp.2 = getv ? :_view;
+        symbol [ toggleDebugSunlight %tmp.3 18 14 33 ];
+        %tmp.3 = getv function %tmp.2 :toggleDebugSunlight;
+        invoke %tmp.2 %tmp.3();
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc" 19 8 ]
+        %tmp.4 = true;
+        ret %tmp.4;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayDelegate_mc_17_71_20_4_stop:
+    }
+}
+[ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayDelegate.mc"; @line = 1; ]
+<init> {
+}

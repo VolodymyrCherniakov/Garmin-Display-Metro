@@ -22,14 +22,18 @@ module Rez {
     module Strings {
         (:initialized) var ColorLightGray as ResourceId;
         (:initialized) var ColorBlue as ResourceId;
-        (:initialized) var ColorRed as ResourceId;
-        (:initialized) var ForegroundColorTitle as ResourceId;
         (:initialized) var BackgroundColorTitle as ResourceId;
         (:initialized) var ColorDarkGray as ResourceId;
+        (:initialized) var SunlightDark as ResourceId;
+        (:initialized) var SunlightModeTitle as ResourceId;
         (:initialized) var MilitaryFormatTitle as ResourceId;
         (:initialized) var ColorBlack as ResourceId;
-        (:initialized) var ColorWhite as ResourceId;
         (:initialized) var AppName as ResourceId;
+        (:initialized) var ColorRed as ResourceId;
+        (:initialized) var ForegroundColorTitle as ResourceId;
+        (:initialized) var SunlightLit as ResourceId;
+        (:initialized) var SunlightAuto as ResourceId;
+        (:initialized) var ColorWhite as ResourceId;
     } // Strings
 
     module Styles {
