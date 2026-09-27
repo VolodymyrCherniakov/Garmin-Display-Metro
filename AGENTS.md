@@ -25,6 +25,7 @@ garmin_metro/
     ├── source/
     │   ├── MetroDisplayApp.mc                  # Application entry point (AppBase)
     │   ├── MetroDisplayView.mc                 # Core rendering & complications engine
+    │   ├── MetroDisplayDelegate.mc             # WatchFaceDelegate handling touch tap toggle
     │   └── MetroDisplayBackground.mc           # Background canvas drawable handler
     └── resources/
         ├── drawables/launcher_icon.svg         # App launcher icon
@@ -66,10 +67,15 @@ From inside the `MetroDisplay` directory (`/home/x13/Projects/garmin_metro/Metro
 
 ### Display Metrics
 - **Screen Resolution**: 280 x 280 px (center: `(140, 140)`).
-- **Tubes**:
-  - Dimensions: width 44 px, height 92 px (Y: 94).
-  - Tube X positions: `[36, 86, 150, 200]` for `[H1, H2, M1, M2]`.
-  - Colon indicator: INS-1 neon glow dots at `X = 140`, `Y = 124` and `156`.
+- **Scaled Nixie Tubes**:
+  - Dimensions: width 34 px, height 74 px (Y: 105).
+  - Tube X positions: `[54, 94, 152, 192]` for `[H1, H2, M1, M2]`.
+  - Colon indicator: INS-1 neon glow dots at `X = 140`, `Y = 129` and `153`.
+- **Top Sunlight Indicator Tube**:
+  - Dimensions: width 104 px, height 16 px (X: 88, Y: 32).
+  - Terminal mounting brackets at ends with rivets.
+  - Active state (Sunlight / Bright ambient): Vivid electric cyan halo, mid neon beam, white-hot ice-blue filament.
+  - Inactive state (Dark / Shadow): Dark smoked glass capsule with subtle unlit cathode wire.
 
 ### Rendering Pipeline (Order of Execution in `onUpdate`)
 1. **PCB Background**:
@@ -77,20 +83,26 @@ From inside the `MetroDisplay` directory (`/home/x13/Projects/garmin_metro/Metro
    - Copper circuit traces (`0x183020`) with 45° and 90° bends.
    - Solder vias with copper pads (`0x4A4020`) and drill holes (`0x08100C`).
    - Technical silkscreen text (`METRO D-6 · DISP-01`), guide lines, and fiducial crosshairs.
-2. **Nixie Tubes (`drawNixieTube`)**:
+2. **Top Ambient / Sunlight Neon Tube (`drawTopSunlightTube`)**:
+   - Evaluated via `isSunlitEnvironment()`:
+     - Interactive Simulator Tap: `MetroDisplayDelegate` handles screen tap / press events via `toggleDebugSunlight()`, toggling `_debugSunlight` (default: `true`).
+     - App Settings Override: `SunlightMode` (Auto, Always Sunlit, Always Dark).
+     - Real-time Astronomical: `Toybox.Weather.getSunrise()` / `getSunset()` based on device GPS location.
+     - Fallback: Civil daylight hours (06:30 - 19:30).
+3. **Top Complication**: Military date badge plate (`DAY · DD MON`) with radiation warning triangle at Y: 56.
+4. **Nixie Tubes (`drawNixieTube`)**:
    - Stamped metal base socket (`0x1F2426`).
    - Dark vacuum cavity (`0x0A0D0B`).
    - Crosshatch anode mesh grid (`0x1A221C`).
    - Outer capsule glass border (`0x38423E`) + specular reflection streak (`0x587880`).
    - Unlit cathode ghost filament stack (subtle digit `8` at `0x22140A`).
    - Active bent-wire cathode digit (`0-9`) rendered with 3 passes:
-     - Pass 1: Plasma halo (`0x882200`, pen width 6).
-     - Pass 2: Neon orange glow (`0xFF5500`, pen width 3).
+     - Pass 1: Plasma halo (`0x882200`, pen width 4).
+     - Pass 2: Neon orange glow (`0xFF5500`, pen width 2).
      - Pass 3: White-hot core (`0xFFFF66`, pen width 1).
-3. **INS-1 Neon Indicator Bulbs**: Dual miniature glowing bulbs for time colon.
-4. **Top Complication**: Military date badge plate (`DAY · DD MON`) with radiation warning triangle.
-5. **Bottom Complication**: Geiger dosimeter 10-segment battery bar (`PWR %` or `CHG %`), dynamically colored for normal amber (`0xFF5500`), low battery red (`0xFF0000`), or charging green (`0x00FF88`).
-6. **Bezel Screws**: 4 corner chassis bolts at 45° angles with slotted screw heads.
+5. **INS-1 Neon Indicator Bulbs**: Dual miniature glowing bulbs for time colon.
+6. **Bottom Complication**: Geiger dosimeter 10-segment battery bar (`PWR %` or `CHG %`) at Y: 204.
+7. **Bezel Screws**: 4 corner chassis bolts at 45° angles with slotted screw heads.
 
 ---
 
