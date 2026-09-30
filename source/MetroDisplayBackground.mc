@@ -13,9 +13,19 @@ class Background extends WatchUi.Drawable {
         Drawable.initialize(dictionary);
     }
 
-    function draw(dc as Dc) as Void {
-        // Set the background color then call to clear the screen
-        dc.setColor(Graphics.COLOR_TRANSPARENT, getApp().getProperty("BackgroundColor") as Number);
+    function draw(dc as Graphics.Dc) as Void {
+        var bgColor = Graphics.COLOR_BLACK;
+        try {
+            if (Application has :Properties && Application.Properties has :getValue) {
+                var val = Application.Properties.getValue("BackgroundColor");
+                if (val != null) {
+                    bgColor = val as Lang.Number;
+                }
+            }
+        } catch (e) {
+            bgColor = Graphics.COLOR_BLACK;
+        }
+        dc.setColor(Graphics.COLOR_TRANSPARENT, bgColor);
         dc.clear();
     }
 

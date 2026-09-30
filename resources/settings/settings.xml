@@ -1,32 +1,132 @@
 <settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
 
-    <setting propertyKey="@Properties.BackgroundColor" title="@Strings.BackgroundColorTitle">
-        <settingConfig type="list">
-            <listEntry value="0x000000">@Strings.ColorBlack</listEntry>
-            <listEntry value="0x555555">@Strings.ColorDarkGray</listEntry>
-            <listEntry value="0xAAAAAA">@Strings.ColorLightGray</listEntry>
-            <listEntry value="0xFFFFFF">@Strings.ColorWhite</listEntry>
-        </settingConfig>
-    </setting>
-
-    <setting propertyKey="@Properties.ForegroundColor" title="@Strings.ForegroundColorTitle">
-        <settingConfig type="list">
-            <listEntry value="0x000000">@Strings.ColorBlack</listEntry>
-            <listEntry value="0x0000FF">@Strings.ColorBlue</listEntry>
-            <listEntry value="0xFF0000">@Strings.ColorRed</listEntry>
-            <listEntry value="0xFFFFFF">@Strings.ColorWhite</listEntry>
-        </settingConfig>
-    </setting>
-
-    <setting propertyKey="@Properties.UseMilitaryFormat" title="@Strings.MilitaryFormatTitle">
-        <settingConfig type="boolean" />
-    </setting>
-
     <setting propertyKey="@Properties.SunlightMode" title="@Strings.SunlightModeTitle">
         <settingConfig type="list">
             <listEntry value="0">@Strings.SunlightAuto</listEntry>
             <listEntry value="1">@Strings.SunlightLit</listEntry>
             <listEntry value="2">@Strings.SunlightDark</listEntry>
+        </settingConfig>
+    </setting>
+
+    <!-- Upper Dashboard Slots (Row 3: Left & Right) -->
+    <setting propertyKey="@Properties.SlotUpperLeft" title="@Strings.SlotUpperLeftTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.MetricNone</listEntry>
+            <listEntry value="1">@Strings.MetricHeartRate</listEntry>
+            <listEntry value="2">@Strings.MetricBattery</listEntry>
+            <listEntry value="3">@Strings.MetricSteps</listEntry>
+            <listEntry value="4">@Strings.MetricCalories</listEntry>
+            <listEntry value="5">@Strings.MetricDistance</listEntry>
+            <listEntry value="6">@Strings.MetricWeather</listEntry>
+            <listEntry value="7">@Strings.MetricSunriseSunset</listEntry>
+            <listEntry value="8">@Strings.MetricActiveMinutes</listEntry>
+            <listEntry value="9">@Strings.MetricFloors</listEntry>
+            <listEntry value="10">@Strings.MetricAltitude</listEntry>
+            <listEntry value="11">@Strings.MetricBodyBattery</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.SlotUpperRight" title="@Strings.SlotUpperRightTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.MetricNone</listEntry>
+            <listEntry value="1">@Strings.MetricHeartRate</listEntry>
+            <listEntry value="2">@Strings.MetricBattery</listEntry>
+            <listEntry value="3">@Strings.MetricSteps</listEntry>
+            <listEntry value="4">@Strings.MetricCalories</listEntry>
+            <listEntry value="5">@Strings.MetricDistance</listEntry>
+            <listEntry value="6">@Strings.MetricWeather</listEntry>
+            <listEntry value="7">@Strings.MetricSunriseSunset</listEntry>
+            <listEntry value="8">@Strings.MetricActiveMinutes</listEntry>
+            <listEntry value="9">@Strings.MetricFloors</listEntry>
+            <listEntry value="10">@Strings.MetricAltitude</listEntry>
+            <listEntry value="11">@Strings.MetricBodyBattery</listEntry>
+        </settingConfig>
+    </setting>
+
+    <!-- Lower Dashboard Slots (Row 6: Left, Center, Right) -->
+    <setting propertyKey="@Properties.SlotLowerLeft" title="@Strings.SlotLowerLeftTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.MetricNone</listEntry>
+            <listEntry value="1">@Strings.MetricHeartRate</listEntry>
+            <listEntry value="2">@Strings.MetricBattery</listEntry>
+            <listEntry value="3">@Strings.MetricSteps</listEntry>
+            <listEntry value="4">@Strings.MetricCalories</listEntry>
+            <listEntry value="5">@Strings.MetricDistance</listEntry>
+            <listEntry value="6">@Strings.MetricWeather</listEntry>
+            <listEntry value="7">@Strings.MetricSunriseSunset</listEntry>
+            <listEntry value="8">@Strings.MetricActiveMinutes</listEntry>
+            <listEntry value="9">@Strings.MetricFloors</listEntry>
+            <listEntry value="10">@Strings.MetricAltitude</listEntry>
+            <listEntry value="11">@Strings.MetricBodyBattery</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.SlotLowerCenter" title="@Strings.SlotLowerCenterTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.MetricNone</listEntry>
+            <listEntry value="1">@Strings.MetricHeartRate</listEntry>
+            <listEntry value="2">@Strings.MetricBattery</listEntry>
+            <listEntry value="3">@Strings.MetricSteps</listEntry>
+            <listEntry value="4">@Strings.MetricCalories</listEntry>
+            <listEntry value="5">@Strings.MetricDistance</listEntry>
+            <listEntry value="6">@Strings.MetricWeather</listEntry>
+            <listEntry value="7">@Strings.MetricSunriseSunset</listEntry>
+            <listEntry value="8">@Strings.MetricActiveMinutes</listEntry>
+            <listEntry value="9">@Strings.MetricFloors</listEntry>
+            <listEntry value="10">@Strings.MetricAltitude</listEntry>
+            <listEntry value="11">@Strings.MetricBodyBattery</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.SlotLowerRight" title="@Strings.SlotLowerRightTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.MetricNone</listEntry>
+            <listEntry value="1">@Strings.MetricHeartRate</listEntry>
+            <listEntry value="2">@Strings.MetricBattery</listEntry>
+            <listEntry value="3">@Strings.MetricSteps</listEntry>
+            <listEntry value="4">@Strings.MetricCalories</listEntry>
+            <listEntry value="5">@Strings.MetricDistance</listEntry>
+            <listEntry value="6">@Strings.MetricWeather</listEntry>
+            <listEntry value="7">@Strings.MetricSunriseSunset</listEntry>
+            <listEntry value="8">@Strings.MetricActiveMinutes</listEntry>
+            <listEntry value="9">@Strings.MetricFloors</listEntry>
+            <listEntry value="10">@Strings.MetricAltitude</listEntry>
+            <listEntry value="11">@Strings.MetricBodyBattery</listEntry>
+        </settingConfig>
+    </setting>
+
+    <!-- Bottom Dashboard Slots (Row 7: Distance & Body Battery) -->
+    <setting propertyKey="@Properties.SlotBottomDistance" title="@Strings.SlotBottomDistanceTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.MetricNone</listEntry>
+            <listEntry value="1">@Strings.MetricHeartRate</listEntry>
+            <listEntry value="2">@Strings.MetricBattery</listEntry>
+            <listEntry value="3">@Strings.MetricSteps</listEntry>
+            <listEntry value="4">@Strings.MetricCalories</listEntry>
+            <listEntry value="5">@Strings.MetricDistance</listEntry>
+            <listEntry value="6">@Strings.MetricWeather</listEntry>
+            <listEntry value="7">@Strings.MetricSunriseSunset</listEntry>
+            <listEntry value="8">@Strings.MetricActiveMinutes</listEntry>
+            <listEntry value="9">@Strings.MetricFloors</listEntry>
+            <listEntry value="10">@Strings.MetricAltitude</listEntry>
+            <listEntry value="11">@Strings.MetricBodyBattery</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.SlotBottomBodyBattery" title="@Strings.SlotBottomBodyBatteryTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.MetricNone</listEntry>
+            <listEntry value="1">@Strings.MetricHeartRate</listEntry>
+            <listEntry value="2">@Strings.MetricBattery</listEntry>
+            <listEntry value="3">@Strings.MetricSteps</listEntry>
+            <listEntry value="4">@Strings.MetricCalories</listEntry>
+            <listEntry value="5">@Strings.MetricDistance</listEntry>
+            <listEntry value="6">@Strings.MetricWeather</listEntry>
+            <listEntry value="7">@Strings.MetricSunriseSunset</listEntry>
+            <listEntry value="8">@Strings.MetricActiveMinutes</listEntry>
+            <listEntry value="9">@Strings.MetricFloors</listEntry>
+            <listEntry value="10">@Strings.MetricAltitude</listEntry>
+            <listEntry value="11">@Strings.MetricBodyBattery</listEntry>
         </settingConfig>
     </setting>
 

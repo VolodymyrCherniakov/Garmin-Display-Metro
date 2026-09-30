@@ -18,4 +18,27 @@
     <string id="SunlightLit">Simulate: In Sunlight (Lit)</string>
     <string id="SunlightDark">Simulate: In Darkness (Unlit)</string>
 
+    <!-- Data Slot Titles -->
+    <string id="SlotUpperLeftTitle">Upper Left Slot (Altitude)</string>
+    <string id="SlotUpperRightTitle">Upper Right Slot (Weather)</string>
+    <string id="SlotLowerLeftTitle">Lower Left Slot (Calories)</string>
+    <string id="SlotLowerCenterTitle">Lower Center Slot (Steps)</string>
+    <string id="SlotLowerRightTitle">Lower Right Slot (Heart Rate)</string>
+    <string id="SlotBottomDistanceTitle">Bottom Distance Slot</string>
+    <string id="SlotBottomBodyBatteryTitle">Bottom Body Battery Slot</string>
+
+    <!-- Metric Options -->
+    <string id="MetricNone">None (Off)</string>
+    <string id="MetricHeartRate">Heart Rate</string>
+    <string id="MetricBattery">Battery</string>
+    <string id="MetricSteps">Steps</string>
+    <string id="MetricCalories">Calories</string>
+    <string id="MetricDistance">Distance</string>
+    <string id="MetricWeather">Weather / Temperature</string>
+    <string id="MetricSunriseSunset">Sunrise / Sunset</string>
+    <string id="MetricActiveMinutes">Active Minutes</string>
+    <string id="MetricFloors">Floors Climbed</string>
+    <string id="MetricAltitude">Altitude / Elevation</string>
+    <string id="MetricBodyBattery">Body Battery</string>
+
 </strings>

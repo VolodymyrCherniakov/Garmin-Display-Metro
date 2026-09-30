@@ -40,36 +40,136 @@ _home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_8_
         invoke %tmp.8 %tmp.9(%tmp.10);
 _home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_8_26_14_4_stop:
     }
-    [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc"; @line = 16; @symbol_functiondef = [draw,16,13,17]; @symbol_param<0> = [dc,16,18,20]; @symbol_param<0>_type<0> = [Dc,16,24,26]; ]
-    function draw(dc as Dc) as Void {
-_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_16_36_20_4_start:
+    [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc"; @line = 16; @symbol_functiondef = [draw,16,13,17]; @symbol_param<0> = [dc,16,18,20]; @symbol_param<0>_type<0> = [Graphics,16,24,32]; @symbol_param<0>_type<1> = [Dc,16,33,35]; ]
+    function draw(dc as Graphics.Dc) as Void {
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_16_45_30_4_start:
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" 17 8 ]
+        [ "_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_16_45_30_4_start" "_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_16_45_30_4_stop" ]
+        %bgColor.1 = local;
+        symbol [ bgColor %bgColor.1 17 12 19 ];
+        symbol [ Graphics %tmp.1 17 22 30 ];
+        %tmp.1 = getm $.Toybox.Graphics;
+        symbol [ COLOR_BLACK %tmp.2 17 31 42 ];
+        %tmp.2 = getv %tmp.1 :COLOR_BLACK;
+        lputv %bgColor.1 %tmp.2;
+        symbol [ bgColor %bgColor.1 17 12 19 ];
 [ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" 18 8 ]
-        %tmp.1 = lgetv %dc;
-        symbol [ dc %tmp.1 18 8 10 ];
-        symbol [ setColor %tmp.2 18 11 19 ];
-        %tmp.2 = getv function %tmp.1 :setColor;
-        symbol [ Graphics %tmp.3 18 20 28 ];
-        %tmp.3 = getm $.Toybox.Graphics;
-        symbol [ COLOR_TRANSPARENT %tmp.4 18 29 46 ];
-        %tmp.4 = getv %tmp.3 :COLOR_TRANSPARENT;
-        %tmp.5 = self;
-        symbol [ getApp %tmp.6 18 48 54 ];
-        %tmp.6 = getv function %tmp.5 :getApp;
-        %tmp.7 = invoke %tmp.5 %tmp.6();
-        symbol [ getProperty %tmp.8 18 57 68 ];
-        %tmp.8 = getv function %tmp.7 :getProperty;
-        %tmp.9 = "BackgroundColor";
-        %tmp.10 = invoke %tmp.7 %tmp.8(%tmp.9);
-        %tmp.11 = as %tmp.10 Number;
-        symbol [ Number %tmp.11 18 91 97 ];
-        invoke %tmp.1 %tmp.2(%tmp.4, %tmp.11);
-[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" 19 8 ]
-        %tmp.12 = lgetv %dc;
-        symbol [ dc %tmp.12 19 8 10 ];
-        symbol [ clear %tmp.13 19 11 16 ];
-        %tmp.13 = getv function %tmp.12 :clear;
-        invoke %tmp.12 %tmp.13();
-_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_16_36_20_4_stop:
+        try @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_beginTry @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_endTry @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_catch @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_finally;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_beginTry:
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_12_25_8_start:
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" 19 12 ]
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_12_24_12_if_stmt:
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_16_19_75_begin:
+        symbol [ Application %tmp.3 19 16 27 ];
+        %tmp.3 = getm $.Toybox.Application;
+        %tmp.5 = const :Properties;
+        symbol [ Properties %tmp.5 19 33 43 const ];
+        %tmp.6 = canhazplz %tmp.3 %tmp.5;
+        bf %tmp.6 @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_12_24_12_if_end;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_47_19_75_true:
+        symbol [ Application %tmp.7 19 47 58 ];
+        %tmp.7 = getm $.Toybox.Application;
+        symbol [ Properties %tmp.8 19 59 69 ];
+        %tmp.8 = getv %tmp.7 :Properties;
+        %tmp.10 = const :getValue;
+        symbol [ getValue %tmp.10 19 75 83 const ];
+        %tmp.11 = canhazplz %tmp.8 %tmp.10;
+        push %tmp.11;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_47_19_75_end:
+        %tmp.12 = phi [%tmp.6 @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_16_19_75_begin] [%tmp.11 @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_47_19_75_true] [%tmp.12 @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_47_19_75_end];
+        bf %tmp.12 @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_12_24_12_if_end;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_12_24_12_if_true:
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_85_24_12_start:
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" 20 16 ]
+        [ "_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_85_24_12_start" "_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_85_24_12_stop" ]
+        %val.2 = local;
+        symbol [ val %val.2 20 20 23 ];
+        symbol [ Application %tmp.13 20 26 37 ];
+        %tmp.13 = getm $.Toybox.Application;
+        symbol [ Properties %tmp.14 20 38 48 ];
+        %tmp.14 = getv %tmp.13 :Properties;
+        symbol [ getValue %tmp.15 20 49 57 ];
+        %tmp.15 = getv function %tmp.14 :getValue;
+        %tmp.16 = "BackgroundColor";
+        %tmp.17 = invoke %tmp.14 %tmp.15(%tmp.16);
+        lputv %val.2 %tmp.17;
+        symbol [ val %val.2 20 20 23 ];
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" 21 16 ]
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_21_16_23_16_if_stmt:
+        %tmp.18 = lgetv %val.2;
+        symbol [ val %tmp.18 21 20 23 ];
+        %tmp.19 = null;
+        %tmp.20 = ne %tmp.18 %tmp.19;
+        bf %tmp.20 @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_21_16_23_16_if_end;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_21_16_23_16_if_true:
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_21_33_23_16_start:
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" 22 20 ]
+        %tmp.21 = lgetv %val.2;
+        symbol [ val %tmp.21 22 30 33 ];
+        %tmp.22 = as %tmp.21 { (!Null) };
+        %tmp.23 = as %tmp.22 Lang.Number;
+        symbol [ Lang %tmp.23 22 37 41 ];
+        symbol [ Number %tmp.23 22 42 48 ];
+        lputv %bgColor.1 %tmp.23;
+        symbol [ bgColor %bgColor.1 22 20 27 ];
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_21_33_23_16_stop:
+        goto @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_21_16_23_16_if_end;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_21_16_23_16_if_end:
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_85_24_12_stop:
+        goto @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_12_24_12_if_end;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_19_12_24_12_if_end:
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_12_25_8_stop:
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_endTry:
+        jsr @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_finally;
+        goto @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_end;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_catch:
+        %tmp.24 = exception;
+        push %tmp.24;
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" 25 10 ]
+        [ "_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_catch" "_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_25_10_27_8_end" ]
+        %e.3 = local;
+        symbol [ e %e.3 25 17 18 ];
+        %tmp.25 = dup %tmp.24;
+        lputv %e.3 %tmp.25;
+        symbol [ e %e.3 25 17 18 ];
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_25_20_27_8_start:
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" 26 12 ]
+        symbol [ Graphics %tmp.26 26 22 30 ];
+        %tmp.26 = getm $.Toybox.Graphics;
+        symbol [ COLOR_BLACK %tmp.27 26 31 42 ];
+        %tmp.27 = getv %tmp.26 :COLOR_BLACK;
+        lputv %bgColor.1 %tmp.27;
+        symbol [ bgColor %bgColor.1 26 12 19 ];
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_25_20_27_8_stop:
+        jsr @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_finally;
+        pop;
+        goto @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_end;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_25_10_27_8_end:
+        try @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_catch @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_25_10_27_8_end @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_25_10_27_8_end @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_finally;
+        jsr @_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_finally;
+        throw %tmp.24;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_finally:
+        jsrret;
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_18_8_27_8_end:
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" 28 8 ]
+        %tmp.28 = lgetv %dc;
+        symbol [ dc %tmp.28 28 8 10 ];
+        symbol [ setColor %tmp.29 28 11 19 ];
+        %tmp.29 = getv function %tmp.28 :setColor;
+        symbol [ Graphics %tmp.30 28 20 28 ];
+        %tmp.30 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.31 28 29 46 ];
+        %tmp.31 = getv %tmp.30 :COLOR_TRANSPARENT;
+        %tmp.32 = lgetv %bgColor.1;
+        symbol [ bgColor %tmp.32 28 48 55 ];
+        invoke %tmp.28 %tmp.29(%tmp.31, %tmp.32);
+[ "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc" 29 8 ]
+        %tmp.33 = lgetv %dc;
+        symbol [ dc %tmp.33 29 8 10 ];
+        symbol [ clear %tmp.34 29 11 16 ];
+        %tmp.34 = getv function %tmp.33 :clear;
+        invoke %tmp.33 %tmp.34();
+_home_x13_Projects_garmin_metro_MetroDisplay_source_MetroDisplayBackground_mc_16_45_30_4_stop:
     }
 }
 [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/source/MetroDisplayBackground.mc"; @line = 1; ]
