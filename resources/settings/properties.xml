@@ -5,4 +5,13 @@
     <property id="UseMilitaryFormat" type="boolean">false</property>
     <property id="SunlightMode" type="number">0</property>
 
+    <!-- Tactical Dashboard Data Slots -->
+    <property id="SlotUpperLeft" type="number">10</property>
+    <property id="SlotUpperRight" type="number">6</property>
+    <property id="SlotLowerLeft" type="number">4</property>
+    <property id="SlotLowerCenter" type="number">3</property>
+    <property id="SlotLowerRight" type="number">1</property>
+    <property id="SlotBottomDistance" type="number">5</property>
+    <property id="SlotBottomBodyBattery" type="number">11</property>
+
 </properties>
