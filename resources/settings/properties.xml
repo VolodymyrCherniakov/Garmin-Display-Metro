@@ -6,12 +6,11 @@
     <property id="SunlightMode" type="number">0</property>
 
     <!-- Tactical Dashboard Data Slots -->
-    <property id="SlotUpperLeft" type="number">10</property>
-    <property id="SlotUpperRight" type="number">6</property>
-    <property id="SlotLowerLeft" type="number">4</property>
-    <property id="SlotLowerCenter" type="number">3</property>
-    <property id="SlotLowerRight" type="number">1</property>
-    <property id="SlotBottomDistance" type="number">5</property>
-    <property id="SlotBottomBodyBattery" type="number">11</property>
+    <property id="SlotMidLeft" type="number">9</property>         <!-- Floors Climbed -->
+    <property id="SlotMidCenter" type="number">1</property>       <!-- Heart Rate -->
+    <property id="SlotMidRight" type="number">12</property>       <!-- Weather (Temp & Feels-Like) -->
+    <property id="SlotLowerLeft" type="number">3</property>       <!-- Steps -->
+    <property id="SlotLowerRight" type="number">4</property>      <!-- Calories -->
+    <property id="SlotBottom" type="number">11</property>         <!-- Body Battery -->
 
 </properties>
