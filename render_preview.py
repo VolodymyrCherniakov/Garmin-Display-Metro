@@ -1,368 +1,450 @@
 import math
 from PIL import Image, ImageDraw, ImageFont
 
-def render_watchface():
+# 7-Segment Display Definitions
+# Segments: a=bit0(1), b=bit1(2), c=bit2(4), d=bit3(8), e=bit4(16), f=bit5(32), g=bit6(64)
+SEGMENT_MASKS = [
+    0x3F, # 0: a, b, c, d, e, f
+    0x06, # 1: b, c
+    0x5B, # 2: a, b, d, e, g
+    0x4F, # 3: a, b, c, d, g
+    0x66, # 4: b, c, f, g
+    0x6D, # 5: a, c, d, f, g
+    0x7D, # 6: a, c, d, e, f, g
+    0x07, # 7: a, b, c
+    0x7F, # 8: a, b, c, d, e, f, g
+    0x6F  # 9: a, b, c, d, f, g
+]
+
+# Base 7-segment polygon coordinates (relative to digit top-left origin, 26x52 px, thickness 5)
+BASE_SEG_POLYGONS = [
+    [(3, 2), (5, 0), (21, 0), (23, 2), (21, 4), (5, 4)],        # a (top horizontal)
+    [(24, 3), (26, 5), (26, 23), (24, 25), (22, 23), (22, 5)],   # b (upper-right vertical)
+    [(24, 27), (26, 29), (26, 47), (24, 49), (22, 47), (22, 29)],# c (lower-right vertical)
+    [(3, 50), (5, 48), (21, 48), (23, 50), (21, 52), (5, 52)],   # d (bottom horizontal)
+    [(2, 27), (4, 29), (4, 47), (2, 49), (0, 47), (0, 29)],      # e (lower-left vertical)
+    [(2, 3), (4, 5), (4, 23), (2, 25), (0, 23), (0, 5)],        # f (upper-left vertical)
+    [(3, 26), (5, 24), (21, 24), (23, 26), (21, 28), (5, 28)]    # g (middle horizontal)
+]
+
+BASE_SPINE_LINES = [
+    [(5, 2), (21, 2)],   # a
+    [(24, 5), (24, 23)], # b
+    [(24, 29), (24, 47)],# c
+    [(5, 50), (21, 50)], # d
+    [(2, 29), (2, 47)],  # e
+    [(2, 5), (2, 23)],   # f
+    [(5, 26), (21, 26)]  # g
+]
+
+def draw_7seg_nixie_tube(draw, tx, ty, tw, th, digit):
+    # 1. Stamped metal base socket
+    draw.rounded_rectangle([tx + 3, ty + th - 3, tx + tw - 3, ty + th + 4], radius=2, fill=(31, 36, 38, 255), outline=(16, 19, 20, 255))
+    # 2. Glass tube cavity
+    draw.rounded_rectangle([tx, ty, tx + tw, ty + th], radius=8, fill=(10, 13, 11, 255))
+    # 3. Anode mesh grid
+    for my in range(ty + 8, ty + th - 6, 6):
+        draw.line([tx + 4, my, tx + tw - 4, my], fill=(26, 34, 28, 255), width=1)
+    for mx in range(tx + 5, tx + tw - 4, 5):
+        draw.line([mx, ty + 8, mx, ty + th - 6], fill=(26, 34, 28, 255), width=1)
+    # 4. Clear glass capsule border
+    draw.rounded_rectangle([tx, ty, tx + tw, ty + th], radius=8, outline=(56, 66, 62, 255), width=2)
+
+    # 5. 7-Segment Digit
+    ox = tx + 6
+    oy = ty + 9
+    mask = SEGMENT_MASKS[digit] if (digit is not None and 0 <= digit <= 9) else 0
+
+    # Unlit ghost segments (faint "8" in every tube)
+    ghost_col = (34, 20, 10, 255)
+    for s in range(7):
+        if not (mask & (1 << s)):
+            poly = [(x + ox, y + oy) for x, y in BASE_SEG_POLYGONS[s]]
+            draw.polygon(poly, fill=ghost_col)
+
+    # Lit segments with multi-pass neon glow
+    if mask != 0:
+        # Pass 1: Outer halo
+        halo_col = (136, 34, 0, 255)
+        for s in range(7):
+            if mask & (1 << s):
+                p1, p2 = BASE_SPINE_LINES[s]
+                draw.line([(p1[0] + ox, p1[1] + oy), (p2[0] + ox, p2[1] + oy)], fill=halo_col, width=8)
+
+        # Pass 2: Bright neon orange mid glow
+        glow_col = (255, 85, 0, 255)
+        for s in range(7):
+            if mask & (1 << s):
+                poly = [(x + ox, y + oy) for x, y in BASE_SEG_POLYGONS[s]]
+                draw.polygon(poly, fill=glow_col)
+
+        # Pass 3: White-hot core filament spine
+        core_col = (255, 255, 120, 255)
+        for s in range(7):
+            if mask & (1 << s):
+                p1, p2 = BASE_SPINE_LINES[s]
+                draw.line([(p1[0] + ox, p1[1] + oy), (p2[0] + ox, p2[1] + oy)], fill=core_col, width=1)
+
+    # 6. Highlights
+    draw.line([tx + 2, ty + 10, tx + 2, ty + th - 10], fill=(88, 120, 128, 180), width=1)
+    draw.arc([tx + 6, ty + 6, tx + 16, ty + 16], start=180, end=270, fill=(88, 120, 128, 180), width=1)
+
+def render_watchface(lit=True, output_path="preview_full.png"):
     w, h = 280, 280
     cx, cy = 140, 140
     img = Image.new("RGBA", (w, h), (8, 16, 12, 255)) # COLOR_PCB_BG
     draw = ImageDraw.Draw(img)
 
-    # 1. PCB Traces & Integrated Grid Frame
-    trace_col = (24, 48, 32, 255) # COLOR_PCB_TRACE
-    via_pad = (74, 64, 32, 255)   # COLOR_PCB_VIA_PAD
-    via_bg = (8, 16, 12, 255)
-    silk_col = (45, 66, 52, 255)
+    # Color Palette
+    pcb_bg = (8, 16, 12, 255)
+    plate_bg = (12, 20, 16, 255)
+    plate_border = (36, 54, 42, 255) # Dim dark-green inner divider
+    trace_col = (18, 36, 24, 255)    # Muted, darker outside trace
+    via_pad = (58, 50, 24, 255)
+    silk_col = (35, 52, 40, 255)
 
-    def draw_via(x, y):
-        draw.ellipse([x-3, y-3, x+3, y+3], fill=via_pad)
-        draw.ellipse([x-1, y-1, x+1, y+1], fill=via_bg)
-
-    def draw_fiducial(x, y):
-        draw.line([x-3, y, x+3, y], fill=silk_col, width=1)
-        draw.line([x, y-3, x, y+3], fill=silk_col, width=1)
-        draw.ellipse([x-2, y-2, x+2, y+2], outline=silk_col, width=1)
-
-    # Top rails feeding battery & sunlight tube
-    draw.line([86, 12, 86, 24], fill=trace_col, width=2)
-    draw.line([86, 24, 92, 24], fill=trace_col, width=2)
-    draw.line([194, 12, 194, 24], fill=trace_col, width=2)
-    draw.line([194, 24, 188, 24], fill=trace_col, width=2)
-
-    # Guide traces framing Row 3 and Row 4
-    draw.line([28, 52, 50, 52], fill=trace_col, width=2)
-    draw.line([230, 52, 252, 52], fill=trace_col, width=2)
-    draw.line([26, 68, 48, 68], fill=trace_col, width=2)
-    draw.line([232, 68, 254, 68], fill=trace_col, width=2)
-
-    # Side bus traces around side status icons
-    draw.line([16, 114, 22, 120], fill=trace_col, width=2)
-    draw.line([22, 120, 22, 150], fill=trace_col, width=2)
-    draw.line([22, 150, 16, 156], fill=trace_col, width=2)
-
-    draw.line([264, 114, 258, 120], fill=trace_col, width=2)
-    draw.line([258, 120, 258, 150], fill=trace_col, width=2)
-    draw.line([258, 150, 264, 156], fill=trace_col, width=2)
-
-    # Integrated PCB grid rails connecting Row 6, Row 7, and Row 8
-    draw.line([86, 175, 86, 238], fill=trace_col, width=2)
-    draw.line([86, 205, 92, 205], fill=trace_col, width=2)
-    draw.line([86, 229, 92, 229], fill=trace_col, width=2)
-
-    draw.line([194, 175, 194, 238], fill=trace_col, width=2)
-    draw.line([194, 205, 188, 205], fill=trace_col, width=2)
-    draw.line([194, 229, 188, 229], fill=trace_col, width=2)
-
-    # Bottom feeder traces
-    draw.line([18, 238, 42, 238], fill=trace_col, width=2)
-    draw.line([42, 238, 42, 218], fill=trace_col, width=2)
-    draw.line([262, 238, 238, 238], fill=trace_col, width=2)
-    draw.line([238, 238, 238, 218], fill=trace_col, width=2)
-    draw.line([80, 252, 200, 252], fill=trace_col, width=2)
-
-    vias = [
-        [86, 12], [194, 12],
-        [28, 52], [252, 52],
-        [26, 68], [254, 68],
-        [22, 120], [22, 150],
-        [258, 120], [258, 150],
-        [86, 175], [194, 175],
-        [86, 205], [194, 205],
-        [86, 229], [194, 229],
-        [42, 238], [238, 238],
-        [80, 252], [200, 252]
-    ]
-    for vx, vy in vias:
-        draw_via(vx, vy)
-
-    draw_fiducial(16, 135)
-    draw_fiducial(264, 135)
+    amber = (255, 170, 0, 255)
+    orange = (255, 119, 0, 255)
+    green = (0, 255, 136, 255)
+    cyan = (0, 208, 255, 255)
+    red = (255, 51, 0, 255)
 
     # Font setup
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", 9)
-        font_sm = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", 8)
+        font_bat = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", 9)
+        font_val = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", 9)
         font_sec = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", 8)
     except:
-        font = ImageFont.load_default()
-        font_sm = font
-        font_sec = font
+        font_bat = ImageFont.load_default()
+        font_val = font_bat
+        font_sec = font_bat
 
-    # 1. Row 1: Centralized Battery at very top (Y: ~10-16)
+    # 1. PCB Background Traces (Muted, Darker, Outside Only!)
+    draw.line([96, 25, 96, 42], fill=trace_col, width=1)
+    draw.line([184, 25, 184, 42], fill=trace_col, width=1)
+    draw.line([25, 120, 25, 160], fill=trace_col, width=1)
+    draw.line([255, 100, 255, 140], fill=trace_col, width=1)
+
+    # Traces in the transition area between Time and Grid (Y: 180 - 200)
+    draw.line([64, 188, 216, 188], fill=trace_col, width=1)
+    draw.line([64, 188, 64, 196], fill=trace_col, width=1)
+    draw.line([216, 188, 216, 196], fill=trace_col, width=1)
+
+    # Side traces outside Row B and C
+    draw.line([48, 224, 48, 246], fill=trace_col, width=1)
+    draw.line([232, 224, 232, 246], fill=trace_col, width=1)
+
+    vias = [
+        [96, 14], [184, 14],
+        [25, 120], [25, 160],
+        [255, 100], [255, 140],
+        [64, 188], [140, 188], [216, 188],
+        [48, 246], [232, 246]
+    ]
+    for vx, vy in vias:
+        draw.ellipse([vx-2, vy-2, vx+2, vy+2], fill=via_pad)
+        draw.ellipse([vx-1, vy-1, vx+1, vy+1], fill=pcb_bg)
+
+    draw.line([21, 140, 27, 140], fill=silk_col, width=1)
+    draw.line([24, 137, 24, 143], fill=silk_col, width=1)
+    draw.ellipse([22, 138, 26, 142], outline=silk_col, width=1)
+
+    # 2. Row 1: Centralized Top Battery (Center Y = 25)
     bat_pct = 85
     bat_str = f"{bat_pct}%"
-    bbox = font.getbbox(bat_str)
+    bbox = font_bat.getbbox(bat_str)
     tw = bbox[2] - bbox[0]
     total_w = 14 + 4 + tw
     start_x = cx - total_w // 2
-    bat_y = 12
+    bat_y = 25
     bx, by = start_x, bat_y - 4
-    draw.rounded_rectangle([bx, by, bx + 12, by + 8], radius=2, outline=(255, 170, 0, 255), width=1)
-    draw.rectangle([bx + 12, by + 2, bx + 14, by + 6], fill=(255, 170, 0, 255))
-    fill_w = int((bat_pct / 100.0) * 8)
-    draw.rectangle([bx + 2, by + 2, bx + 2 + fill_w, by + 6], fill=(255, 170, 0, 255))
-    draw.text((start_x + 18, bat_y - 5), bat_str, font=font, fill=(255, 170, 0, 255))
+    draw.rounded_rectangle([bx, by, bx + 12, by + 8], radius=2, outline=amber, width=1)
+    draw.rectangle([bx + 12, by + 2, bx + 14, by + 6], fill=amber)
+    draw.rectangle([bx + 2, by + 2, bx + 2 + int((bat_pct / 100.0) * 8), by + 6], fill=amber)
+    draw.text((start_x + 18, bat_y - 5), bat_str, font=font_bat, fill=amber)
 
-    # 2. Row 2: Sunlight Tube directly below battery (Y: ~24-34)
-    tx, ty, tw_t, th_t = 96, 24, 88, 10
-    bw, bh = 8, 12
-    draw.rounded_rectangle([tx - 4, ty - 1, tx - 4 + bw, ty - 1 + bh], radius=2, fill=(72, 58, 38, 255), outline=(46, 36, 22, 255))
-    draw.rounded_rectangle([tx + tw_t - bw + 4, ty - 1, tx + tw_t + 4, ty - 1 + bh], radius=2, fill=(72, 58, 38, 255), outline=(46, 36, 22, 255))
-    draw.rounded_rectangle([tx, ty, tx + tw_t, ty + th_t], radius=4, fill=(6, 29, 43, 255))
-    draw.rounded_rectangle([tx, ty, tx + tw_t, ty + th_t], radius=4, outline=(0, 68, 136, 255), width=2)
-    draw.rounded_rectangle([tx + 1, ty + 1, tx + tw_t - 1, ty + th_t - 1], radius=3, outline=(0, 170, 255, 255), width=1)
-    wy = ty + th_t // 2
-    draw.line([tx + bw - 2, wy, tx + tw_t - bw + 2, wy], fill=(0, 170, 255, 255), width=2)
-    draw.line([tx + bw - 2, wy, tx + tw_t - bw + 2, wy], fill=(238, 255, 255, 255), width=1)
-    draw.ellipse([cx - 3, wy - 3, cx + 3, wy + 3], fill=(0, 170, 255, 255))
-    draw.ellipse([cx - 1, wy - 1, cx + 1, wy + 1], fill=(238, 255, 255, 255))
-    draw.line([tx + 8, ty + 2, tx + tw_t - 8, ty + 2], fill=(170, 238, 255, 200), width=1)
+    # 3. Row 2: BIGGER Sunlight Neon Tube (W=116, H=15, X=82-198, Y: 42-57, Center Y = 49.5)
+    tx, ty, tw_t, th_t = 82, 42, 116, 15
+    bw, bh = 8, 17
 
-    # Helper: draw stamped plate
-    def draw_plate(x, y, w, h):
-        draw.rounded_rectangle([x, y, x + w, y + h], radius=3, fill=(12, 20, 16, 255), outline=(36, 54, 42, 255), width=1)
-        draw.point([x + 2, y + 2], fill=(64, 85, 72, 255))
-        draw.point([x + w - 3, y + 2], fill=(64, 85, 72, 255))
-        draw.point([x + 2, y + h - 3], fill=(64, 85, 72, 255))
-        draw.point([x + w - 3, y + h - 3], fill=(64, 85, 72, 255))
+    if lit:
+        # Copper Mounting Brackets
+        draw.rounded_rectangle([tx - 4, ty - 1, tx - 4 + bw, ty - 1 + bh], radius=2, fill=(90, 72, 48, 255), outline=(56, 44, 30, 255))
+        draw.rounded_rectangle([tx + tw_t - bw + 4, ty - 1, tx + tw_t + 4, ty - 1 + bh], radius=2, fill=(90, 72, 48, 255), outline=(56, 44, 30, 255))
+        for rx in [tx - 1, tx + tw_t + 1]:
+            draw.ellipse([rx - 1, ty + 2, rx + 1, ty + 4], fill=(156, 126, 76, 255))
+            draw.ellipse([rx - 1, ty + bh - 5, rx + 1, ty + bh - 3], fill=(156, 126, 76, 255))
 
-    # 3. Row 3: Upper 2 Symmetrical Slots tightly placed below tube (Y: 42 - 62)
-    draw_plate(54, 42, 78, 20)
-    draw_plate(148, 42, 78, 20)
+        # Glowing Glass Body (Vibrant electric cyan bloom & white-hot core)
+        draw.rounded_rectangle([tx, ty, tx + tw_t, ty + th_t], radius=5, fill=(6, 29, 43, 255))
+        draw.rounded_rectangle([tx - 1, ty - 1, tx + tw_t + 1, ty + th_t + 1], radius=6, outline=(0, 85, 170, 255), width=2)
+        draw.rounded_rectangle([tx, ty, tx + tw_t, ty + th_t], radius=5, outline=(0, 204, 255, 255), width=1)
+        wy = ty + th_t // 2
+        draw.line([tx + bw - 2, wy, tx + tw_t - bw + 2, wy], fill=(0, 85, 170, 255), width=6)
+        draw.line([tx + bw - 2, wy, tx + tw_t - bw + 2, wy], fill=(0, 204, 255, 255), width=3)
+        draw.line([tx + bw - 2, wy, tx + tw_t - bw + 2, wy], fill=(255, 255, 255, 255), width=1)
+        draw.ellipse([cx - 5, wy - 5, cx + 5, wy + 5], fill=(0, 204, 255, 255))
+        draw.ellipse([cx - 2, wy - 2, cx + 2, wy + 2], fill=(255, 255, 255, 255))
+        draw.line([tx + 10, ty + 2, tx + tw_t - 10, ty + 2], fill=(170, 238, 255, 220), width=1)
+    else:
+        # Dark Unlit Brackets
+        draw.rounded_rectangle([tx - 4, ty - 1, tx - 4 + bw, ty - 1 + bh], radius=2, fill=(40, 38, 36, 255), outline=(22, 22, 24, 255))
+        draw.rounded_rectangle([tx + tw_t - bw + 4, ty - 1, tx + tw_t + 4, ty - 1 + bh], radius=2, fill=(40, 38, 36, 255), outline=(22, 22, 24, 255))
+        for rx in [tx - 1, tx + tw_t + 1]:
+            draw.ellipse([rx - 1, ty + 2, rx + 1, ty + 4], fill=(72, 66, 58, 255))
+            draw.ellipse([rx - 1, ty + bh - 5, rx + 1, ty + bh - 3], fill=(72, 66, 58, 255))
 
-    # Altitude Mountain Icon + "145m"
-    alt_txt = "145m"
-    bbox = font.getbbox(alt_txt)
-    atw = bbox[2] - bbox[0]
-    alt_w = 12 + 4 + atw
-    alt_sx = 93 - alt_w // 2
-    mx, my = alt_sx, 52 - 4
-    draw.line([mx, my + 8, mx + 12, my + 8], fill=(0, 208, 255, 255), width=1)
-    draw.line([mx + 1, my + 8, mx + 4, my + 1], fill=(0, 208, 255, 255), width=1)
-    draw.line([mx + 4, my + 1, mx + 7, my + 8], fill=(0, 208, 255, 255), width=1)
-    draw.line([mx + 6, my + 8, mx + 9, my + 3], fill=(0, 208, 255, 255), width=1)
-    draw.line([mx + 9, my + 3, mx + 12, my + 8], fill=(0, 208, 255, 255), width=1)
-    draw.text((alt_sx + 16, 47), alt_txt, font=font, fill=(0, 208, 255, 255))
+        # Unlit Glass Body
+        draw.rounded_rectangle([tx, ty, tx + tw_t, ty + th_t], radius=5, fill=(10, 16, 20, 255))
+        draw.rounded_rectangle([tx, ty, tx + tw_t, ty + th_t], radius=5, outline=(42, 52, 58, 255), width=1)
+        wy = ty + th_t // 2
+        draw.line([tx + bw - 2, wy, tx + tw_t - bw + 2, wy], fill=(34, 44, 50, 255), width=1)
+        draw.ellipse([cx - 3, wy - 3, cx + 3, wy + 3], fill=(24, 36, 44, 255))
+        draw.line([tx + 10, ty + 2, tx + tw_t - 10, ty + 2], fill=(24, 40, 52, 255), width=1)
 
-    # Weather Cloud Icon + "21°C"
-    wea_txt = "21°C"
-    bbox = font.getbbox(wea_txt)
-    wtw = bbox[2] - bbox[0]
-    wea_w = 11 + 4 + wtw
-    wea_sx = 187 - wea_w // 2
-    wx, wy_i = wea_sx, 52 - 4
-    draw.line([wx + 2, wy_i + 7, wx + 9, wy_i + 7], fill=(0, 208, 255, 255), width=1)
-    draw.ellipse([wx + 2, wy_i + 3, wx + 6, wy_i + 7], outline=(0, 208, 255, 255))
-    draw.ellipse([wx + 4, wy_i + 1, wx + 9, wy_i + 7], outline=(0, 208, 255, 255))
-    draw.point([wx + 9, wy_i + 2], fill=(0, 208, 255, 255))
-    draw.text((wea_sx + 15, 47), wea_txt, font=font, fill=(0, 208, 255, 255))
-
-    # 4. Row 4: Full-Width 3-Slot Date Bar (Y: 72 - 90)
-    draw.rounded_rectangle([36, 72, 244, 90], radius=3, fill=(12, 20, 16, 255), outline=(36, 54, 42, 255), width=1)
-    draw.line([96, 73, 96, 89], fill=(36, 54, 42, 255), width=1)
-    draw.line([184, 73, 184, 89], fill=(36, 54, 42, 255), width=1)
-    draw.point([38, 74], fill=(64, 85, 72, 255))
-    draw.point([242, 74], fill=(64, 85, 72, 255))
-    draw.point([38, 88], fill=(64, 85, 72, 255))
-    draw.point([242, 88], fill=(64, 85, 72, 255))
-
-    # Left: Day
-    draw.text((58, 76), "WED", font=font, fill=(255, 170, 0, 255))
-
-    # Center: Calendar + 30 SEP
-    date_str = "30 SEP"
-    bbox = font.getbbox(date_str)
-    dtw = bbox[2] - bbox[0]
-    cal_w = 10 + 4 + dtw
-    cal_sx = 140 - cal_w // 2
-    cx_i, cy_i = cal_sx, 76
-    draw.rounded_rectangle([cx_i, cy_i + 2, cx_i + 10, cy_i + 10], radius=1, outline=(255, 170, 0, 255), width=1)
-    draw.rectangle([cx_i + 1, cy_i + 2, cx_i + 9, cy_i + 4], fill=(255, 170, 0, 255))
-    draw.line([cx_i + 2, cy_i, cx_i + 2, cy_i + 3], fill=(255, 170, 0, 255), width=1)
-    draw.line([cx_i + 7, cy_i, cx_i + 7, cy_i + 3], fill=(255, 170, 0, 255), width=1)
-    draw.text((cal_sx + 14, 76), date_str, font=font, fill=(255, 170, 0, 255))
-
-    # Right: Hazard / Status Icon
-    hx_i, hy_i = 214 - 5, 76
-    draw.polygon([(hx_i + 5, hy_i), (hx_i + 9, hy_i + 8), (hx_i + 1, hy_i + 8)], fill=(255, 170, 0, 255))
-    draw.point([hx_i + 5, hy_i + 4], fill=(12, 20, 16, 255))
-    draw.point([hx_i + 5, hy_i + 6], fill=(12, 20, 16, 255))
-
-    # 5. Row 5: Centered Nixie Tubes (HH:MM at Y: 100 - 150)
-    tube_w, tube_h = 26, 50
-    tube_y = 100
+    # 4. Row 3: 7-SEGMENT NIXIE CLOCK CENTERED AT (140, 140)
+    # Tubes: W=38, H=70, vertically centered at Y=140 -> Y: 105 - 175
+    tube_w, tube_h = 38, 70
+    tube_y = 105
+    tube_xs = [54, 96, 146, 188]
     digits = [1, 2, 3, 4]
-    tube_xs = [64, 94, 160, 190]
-
-    def draw_digit_wire(x0, y0, w, h, digit, col, width):
-        xl = x0 + 4
-        xr = x0 + w - 4
-        xm = x0 + w // 2
-        yt = y0 + 6
-        yb = y0 + h - 6
-        ym = y0 + h // 2
-        r = (xr - xl) // 2
-
-        if digit == 1:
-            draw.line([xm + 1, yt, xm + 1, yb], fill=col, width=width)
-            draw.line([xl + 1, yt + 8, xm + 1, yt], fill=col, width=width)
-            draw.line([xm - 5, yb, xm + 6, yb], fill=col, width=width)
-        elif digit == 2:
-            draw.arc([xm - r, yt, xm + r, yt + 2*r], start=180, end=360, fill=col, width=width)
-            draw.line([xr, yt + r, xl, yb], fill=col, width=width)
-            draw.line([xl, yb, xr, yb], fill=col, width=width)
-            draw.line([xr, yb, xr, yb - 4], fill=col, width=width)
-        elif digit == 3:
-            draw.arc([xm - r, yt, xm + r, yt + 2*r], start=180, end=360, fill=col, width=width)
-            draw.line([xr, yt + r, xm + 1, ym], fill=col, width=width)
-            draw.line([xm + 1, ym, xr, yb - r], fill=col, width=width)
-            draw.arc([xm - r, yb - 2*r, xm + r, yb], start=0, end=180, fill=col, width=width)
-        elif digit == 4:
-            draw.line([xr - 2, yt, xr - 2, yb], fill=col, width=width)
-            draw.line([xr - 2, yt, xl, ym + 2], fill=col, width=width)
-            draw.line([xl, ym + 2, xr, ym + 2], fill=col, width=width)
-        elif digit == 8:
-            draw.ellipse([xm - r + 1, yt, xm + r - 1, yt + 2*r - 2], outline=col, width=width)
-            draw.ellipse([xm - r, yb - 2*r, xm + r, yb], outline=col, width=width)
 
     for i, x in enumerate(tube_xs):
-        draw.rounded_rectangle([x + 2, tube_y + tube_h - 3, x + tube_w - 2, tube_y + tube_h + 2], radius=2, fill=(31, 36, 38, 255), outline=(16, 19, 20, 255))
-        draw.rounded_rectangle([x, tube_y, x + tube_w, tube_y + tube_h], radius=6, fill=(10, 13, 11, 255))
-        for my in range(tube_y + 5, tube_y + tube_h - 4, 5):
-            draw.line([x + 3, my, x + tube_w - 3, my], fill=(26, 34, 28, 255), width=1)
-        for mx in range(x + 4, x + tube_w - 3, 4):
-            draw.line([mx, tube_y + 5, mx, tube_y + tube_h - 4], fill=(26, 34, 28, 255), width=1)
-        draw.rounded_rectangle([x, tube_y, x + tube_w, tube_y + tube_h], radius=6, outline=(56, 66, 62, 255), width=2)
-        draw_digit_wire(x, tube_y, tube_w, tube_h, 8, (34, 20, 10, 255), 1)
-        d = digits[i]
-        draw_digit_wire(x, tube_y, tube_w, tube_h, d, (136, 34, 0, 255), 3)
-        draw_digit_wire(x, tube_y, tube_w, tube_h, d, (255, 85, 0, 255), 2)
-        draw_digit_wire(x, tube_y, tube_w, tube_h, d, (255, 255, 102, 255), 1)
-        draw.line([x + 2, tube_y + 8, x + 2, tube_y + tube_h - 8], fill=(88, 120, 128, 180), width=1)
+        draw_7seg_nixie_tube(draw, x, tube_y, tube_w, tube_h, digits[i])
 
-    # Colon bulbs (X: 140, Y: 115 and 135)
-    for cy_c in [115, 135]:
+    # INS-1 Colon bulbs (Centered at X: 140, symmetric around Y: 140 -> Y: 126 and 154)
+    for cy_c in [126, 154]:
         draw.rounded_rectangle([140 - 3, cy_c - 5, 140 + 3, cy_c + 5], radius=2, fill=(10, 13, 11, 255), outline=(56, 66, 62, 255))
         draw.ellipse([140 - 3, cy_c - 3, 140 + 3, cy_c + 3], fill=(136, 34, 0, 255))
         draw.ellipse([140 - 2, cy_c - 2, 140 + 2, cy_c + 2], fill=(255, 85, 0, 255))
         draw.ellipse([140 - 1, cy_c - 1, 140 + 1, cy_c + 1], fill=(255, 255, 102, 255))
 
-    # Sub-script Seconds directly underneath minutes digits (X: 172 to 204, Y: 152 to 164)
-    draw.rounded_rectangle([172, 152, 204, 164], radius=2, fill=(12, 20, 16, 255), outline=(36, 54, 42, 255), width=1)
-    draw.text((182, 154), "42", font=font_sec, fill=(255, 170, 0, 255))
+    # Sub-script Seconds: On RIGHT side of minutes tubes, baseline aligned to bottom edge (Y=175)
+    # Gap to minutes tube is 4 px (226 -> 230), Y: 163 (baseline ~175)
+    sec_x = 230
+    sec_y = 163
+    draw.text((sec_x, sec_y), "42", font=font_sec, fill=amber)
 
-    # Left Side Icons: Bluetooth + Dynamic Alarm Bell (Stacked)
-    # Bluetooth at Y: 118
-    draw.line([36, 112, 36, 124], fill=(0, 208, 255, 255), width=1)
-    draw.line([33, 115, 39, 121], fill=(0, 208, 255, 255), width=1)
-    draw.line([39, 121, 36, 124], fill=(0, 208, 255, 255), width=1)
-    draw.line([33, 121, 39, 115], fill=(0, 208, 255, 255), width=1)
-    draw.line([39, 115, 36, 112], fill=(0, 208, 255, 255), width=1)
+    # Left Side Icons: Bluetooth centered around Y: 140
+    # At (32, 131) and Dynamic Alarm Bell at (32, 149)
+    draw.line([32, 125, 32, 137], fill=cyan, width=1)
+    draw.line([29, 128, 35, 134], fill=cyan, width=1)
+    draw.line([35, 134, 32, 137], fill=cyan, width=1)
+    draw.line([29, 134, 35, 128], fill=cyan, width=1)
+    draw.line([35, 128, 32, 125], fill=cyan, width=1)
 
-    # Dynamic Alarm Bell at Y: 136
-    draw.arc([32, 131, 40, 138], start=180, end=360, fill=(255, 170, 0, 255), width=1)
-    draw.line([31, 137, 41, 137], fill=(255, 170, 0, 255), width=1)
-    draw.point([36, 139], fill=(255, 170, 0, 255))
+    draw.arc([28, 144, 36, 151], start=180, end=360, fill=amber, width=1)
+    draw.line([27, 150, 37, 150], fill=amber, width=1)
+    draw.point([32, 152], fill=amber)
 
-    # Right Side Icon: Notification message bubble at Y: 125
-    draw.rounded_rectangle([239, 121, 249, 129], radius=2, outline=(0, 208, 255, 255), width=1)
-    draw.line([241, 128, 243, 130], fill=(0, 208, 255, 255), width=1)
-    draw.line([243, 130, 243, 128], fill=(0, 208, 255, 255), width=1)
-    draw.ellipse([247, 119, 250, 122], fill=(0, 208, 255, 255))
+    # Right Side Icon: Notification message bubble moved to (248, 125), well clear of seconds!
+    draw.rounded_rectangle([243, 121, 253, 129], radius=2, outline=cyan, width=1)
+    draw.line([245, 128, 247, 130], fill=cyan, width=1)
+    draw.line([247, 130, 247, 128], fill=cyan, width=1)
+    draw.ellipse([251, 119, 254, 122], fill=cyan)
 
-    # 6. Row 6: Lower 3 Data Slots right under time block (Y: 170 - 190)
-    # Left: Calories (38-100, w=62), Center: Steps (108-172, w=64), Right: Heart Rate (180-242, w=62)
-    draw_plate(38, 170, 62, 20)
-    draw_plate(108, 170, 64, 20)
-    draw_plate(180, 170, 62, 20)
+    # 5. Seamless Stepped Pyramid Grid (Step 3 & 4: Smaller cells H=22, lowered to 8-10px from bottom edge)
+    # Row A: Y: 202 - 224 (H=22)
+    # Row B: Y: 224 - 246 (H=22)
+    # Row C: Y: 246 - 268 (H=22) -> Bottom at Y=268, exactly 8-10px from round display edge!
+    ya = 202
+    yb = 224
+    yc = 246
+    yd = 268
 
-    # Calories: Flame Icon + "1840"
-    cal_txt = "1840"
-    bbox = font.getbbox(cal_txt)
-    ctw = bbox[2] - bbox[0]
-    cal_w = 9 + 4 + ctw
-    cal_sx = 69 - cal_w // 2
-    fx, fy = cal_sx, 180 - 5
-    draw.line([fx + 4, fy, fx + 1, fy + 6], fill=(255, 119, 0, 255), width=1)
-    draw.line([fx + 1, fy + 6, fx + 4, fy + 9], fill=(255, 119, 0, 255), width=1)
-    draw.line([fx + 4, fy + 9, fx + 7, fy + 6], fill=(255, 119, 0, 255), width=1)
-    draw.line([fx + 7, fy + 6, fx + 4, fy], fill=(255, 119, 0, 255), width=1)
-    draw.point([fx + 4, fy + 6], fill=(255, 119, 0, 255))
-    draw.text((cal_sx + 13, 175), cal_txt, font=font, fill=(255, 119, 0, 255))
+    xa_l, xa_r = 26, 254
+    xb_l, xb_r = 64, 216
+    xc_l, xc_r = 104, 176 # Narrowed to 72px for clean 8-10px margin to circular curvature
 
-    # Steps: Footsteps Icon + "10741"
-    step_txt = "10741"
-    bbox = font.getbbox(step_txt)
-    stw = bbox[2] - bbox[0]
-    step_w = 10 + 4 + stw
-    step_sx = 140 - step_w // 2
-    sx, sy = step_sx, 180 - 4
-    draw.rounded_rectangle([sx, sy + 3, sx + 3, sy + 8], radius=1, fill=(0, 255, 136, 255))
-    draw.ellipse([sx, sy, sx + 2, sy + 2], fill=(0, 255, 136, 255))
-    draw.rounded_rectangle([sx + 6, sy, sx + 9, sy + 5], radius=1, fill=(0, 255, 136, 255))
-    draw.ellipse([sx + 6, sy + 6, sx + 8, sy + 8], fill=(0, 255, 136, 255))
-    draw.text((step_sx + 14, 175), step_txt, font=font, fill=(0, 255, 136, 255))
+    # Seamless plate fills (subtle dark cell fill, ZERO gaps)
+    draw.rectangle([xa_l, ya, xa_r, yb], fill=plate_bg)
+    draw.rectangle([xb_l, yb, xb_r, yc], fill=plate_bg)
+    draw.rectangle([xc_l, yc, xc_r, yd], fill=plate_bg)
 
-    # Heart Rate: Heart Icon + "80"
+    # Step 5: Thin dim dark-green INNER divider lines ONLY (NO outer border!)
+    # Row A vertical dividers:
+    draw.line([102, ya, 102, yb], fill=plate_border, width=1)
+    draw.line([178, ya, 178, yb], fill=plate_border, width=1)
+
+    # Horizontal shared divider between Row A and Row B (where they touch: 64 to 216):
+    draw.line([xb_l, yb, xb_r, yb], fill=plate_border, width=1)
+
+    # Row B vertical divider:
+    draw.line([140, yb, 140, yc], fill=plate_border, width=1)
+
+    # Horizontal shared divider between Row B and Row C (where they touch: 104 to 176):
+    draw.line([xc_l, yc, xc_r, yc], fill=plate_border, width=1)
+
+    cy_a = (ya + yb) // 2 # 213
+    cy_b = (yb + yc) // 2 # 235
+    cy_c = (yc + yd) // 2 # 257
+
+    # Row A - Cell A1: Floors (Ascending stairs + plain number '12')
+    fl_txt = "12"
+    bbox = font_val.getbbox(fl_txt)
+    fl_tw = bbox[2] - bbox[0]
+    fl_icon_w = 11
+    fl_w = fl_icon_w + 4 + fl_tw
+    fl_sx = 64 - fl_w // 2
+    sty = cy_a - 5
+    draw.rectangle([fl_sx, sty + 7, fl_sx + 2, sty + 10], fill=green)
+    draw.rectangle([fl_sx + 3, sty + 4, fl_sx + 5, sty + 10], fill=green)
+    draw.rectangle([fl_sx + 6, sty, fl_sx + 8, sty + 10], fill=green)
+    draw.text((fl_sx + fl_icon_w + 4, cy_a - 6), fl_txt, font=font_val, fill=green)
+
+    # Row A - Cell A2: Heart Rate (Heart icon + '80')
     hr_txt = "80"
-    bbox = font.getbbox(hr_txt)
+    bbox = font_val.getbbox(hr_txt)
     htw = bbox[2] - bbox[0]
-    hr_w = 10 + 4 + htw
-    hr_sx = 211 - hr_w // 2
-    hx, hy = hr_sx, 180 - 4
-    draw.ellipse([hx + 1, hy, hx + 4, hy + 3], fill=(255, 51, 0, 255))
-    draw.ellipse([hx + 5, hy, hx + 8, hy + 3], fill=(255, 51, 0, 255))
-    draw.polygon([(hx, hy + 2), (hx + 9, hy + 2), (hx + 4, hy + 8)], fill=(255, 51, 0, 255))
-    draw.text((hr_sx + 14, 175), hr_txt, font=font, fill=(255, 51, 0, 255))
+    hr_icon_w = 11
+    hr_w = hr_icon_w + 4 + htw
+    hr_sx = 140 - hr_w // 2
+    hx, hy = hr_sx, cy_a - 5
+    draw.ellipse([hx + 1, hy, hx + 4, hy + 3], fill=red)
+    draw.ellipse([hx + 6, hy, hx + 9, hy + 3], fill=red)
+    draw.polygon([(hx, hy + 2), (hx + 10, hy + 2), (hx + 5, hy + 9)], fill=red)
+    draw.text((hr_sx + hr_icon_w + 4, cy_a - 6), hr_txt, font=font_val, fill=red)
 
-    # 7. Row 7: Distance (Y: 196 - 214, center 205)
-    draw_plate(92, 196, 96, 18)
-    dist_txt = "5.4 km"
-    bbox = font_sm.getbbox(dist_txt)
-    dtw = bbox[2] - bbox[0]
-    dist_w = 9 + 4 + dtw
-    dist_sx = 140 - dist_w // 2
-    dx, dy = dist_sx, 205 - 5
-    draw.ellipse([dx + 1, dy, dx + 7, dy + 6], outline=(255, 170, 0, 255), width=1)
-    draw.point([dx + 4, dy + 3], fill=(255, 170, 0, 255))
-    draw.line([dx + 1, dy + 4, dx + 4, dy + 9], fill=(255, 170, 0, 255), width=1)
-    draw.line([dx + 7, dy + 4, dx + 4, dy + 9], fill=(255, 170, 0, 255), width=1)
-    draw.text((dist_sx + 13, 201), dist_txt, font=font_sm, fill=(255, 170, 0, 255))
+    # Row A - Cell A3: Compact Temp ('24°/25°', NO spaces around slash!)
+    wea_txt = "24°/25°"
+    bbox = font_val.getbbox(wea_txt)
+    wtw = bbox[2] - bbox[0]
+    wea_icon_w = 11
+    wea_w = wea_icon_w + 3 + wtw
+    wea_sx = 216 - wea_w // 2
+    wx, wy_i = wea_sx, cy_a - 4
+    draw.line([wx + 2, wy_i + 8, wx + 10, wy_i + 8], fill=cyan, width=1)
+    draw.ellipse([wx + 2, wy_i + 3, wx + 6, wy_i + 8], outline=cyan)
+    draw.ellipse([wx + 4, wy_i + 1, wx + 10, wy_i + 8], outline=cyan)
+    draw.point([wx + 10, wy_i + 2], fill=cyan)
+    draw.text((wea_sx + wea_icon_w + 3, cy_a - 6), wea_txt, font=font_val, fill=cyan)
 
-    # 8. Row 8: Updated Body Battery Vitality Icon + "75%" (Y: 220 - 238, center 229)
-    draw_plate(92, 220, 96, 18)
+    # Row B - Cell B1: Steps (Footsteps icon + '10741', Center X = 102)
+    step_txt = "10741"
+    bbox = font_val.getbbox(step_txt)
+    stw = bbox[2] - bbox[0]
+    step_icon_w = 11
+    step_w = step_icon_w + 4 + stw
+    step_sx = 102 - step_w // 2
+    sx, sy = step_sx, cy_b - 5
+    draw.rounded_rectangle([sx, sy + 3, sx + 3, sy + 9], radius=1, fill=green)
+    draw.ellipse([sx, sy, sx + 2, sy + 2], fill=green)
+    draw.rounded_rectangle([sx + 6, sy, sx + 9, sy + 6], radius=1, fill=green)
+    draw.ellipse([sx + 6, sy + 7, sx + 8, sy + 9], fill=green)
+    draw.text((step_sx + step_icon_w + 4, cy_b - 6), step_txt, font=font_val, fill=green)
+
+    # Row B - Cell B2: Calories (Recognizable multi-point flame icon + '1840', Center X = 178)
+    cal_txt = "1840"
+    bbox = font_val.getbbox(cal_txt)
+    ctw = bbox[2] - bbox[0]
+    cal_icon_w = 11
+    cal_w = cal_icon_w + 4 + ctw
+    cal_sx = 178 - cal_w // 2
+    fx, fy = cal_sx, cy_b - 6
+    draw.polygon([
+        (fx + 4, fy),
+        (fx + 7, fy + 2),
+        (fx + 9, fy + 6),
+        (fx + 8, fy + 10),
+        (fx + 6, fy + 11),
+        (fx + 2, fy + 11),
+        (fx + 1, fy + 8),
+        (fx + 1, fy + 5),
+        (fx + 3, fy + 3),
+        (fx + 2, fy + 1)
+    ], fill=orange)
+    draw.polygon([
+        (fx + 4, fy + 3),
+        (fx + 7, fy + 7),
+        (fx + 6, fy + 9),
+        (fx + 3, fy + 9),
+        (fx + 3, fy + 6)
+    ], fill=amber)
+    draw.text((cal_sx + cal_icon_w + 4, cy_b - 6), cal_txt, font=font_val, fill=orange)
+
+    # Row C - Cell C: Body Battery (Vitality silhouette icon + '75%', Center X = 140)
     bb_txt = "75%"
-    bbox = font_sm.getbbox(bb_txt)
+    bbox = font_val.getbbox(bb_txt)
     btw = bbox[2] - bbox[0]
-    bb_w = 10 + 4 + btw
+    bb_icon_w = 11
+    bb_w = bb_icon_w + 4 + btw
     bb_sx = 140 - bb_w // 2
-    vx, vy = bb_sx, 229 - 6
-    # Human silhouette + energy core
-    draw.ellipse([vx + 3, vy, vx + 7, vy + 4], fill=(0, 255, 136, 255)) # Head
-    draw.line([vx + 1, vy + 5, vx + 9, vy + 5], fill=(0, 255, 136, 255), width=1) # Shoulders
-    draw.line([vx + 1, vy + 5, vx + 2, vy + 9], fill=(0, 255, 136, 255), width=1)
-    draw.line([vx + 9, vy + 5, vx + 8, vy + 9], fill=(0, 255, 136, 255), width=1)
-    draw.line([vx + 2, vy + 9, vx + 5, vy + 11], fill=(0, 255, 136, 255), width=1)
-    draw.line([vx + 8, vy + 9, vx + 5, vy + 11], fill=(0, 255, 136, 255), width=1)
-    # Energy core
+    vx, vy = bb_sx, cy_c - 6
+    draw.ellipse([vx + 3, vy, vx + 7, vy + 3], fill=green)
+    draw.line([vx + 1, vy + 4, vx + 9, vy + 4], fill=green, width=1)
+    draw.line([vx + 1, vy + 4, vx + 2, vy + 9], fill=green, width=1)
+    draw.line([vx + 9, vy + 4, vx + 8, vy + 9], fill=green, width=1)
+    draw.line([vx + 2, vy + 9, vx + 5, vy + 11], fill=green, width=1)
+    draw.line([vx + 8, vy + 9, vx + 5, vy + 11], fill=green, width=1)
     draw.polygon([(vx + 5, vy + 4), (vx + 3, vy + 7), (vx + 5, vy + 6), (vx + 4, vy + 9), (vx + 7, vy + 6), (vx + 5, vy + 6)], fill=(238, 255, 255, 255))
-    draw.text((bb_sx + 14, 225), bb_txt, font=font_sm, fill=(0, 255, 136, 255))
+    draw.text((bb_sx + bb_icon_w + 4, cy_c - 6), bb_txt, font=font_val, fill=green)
 
-    # 9. Chassis Bolts (Perimeter Corner Screws)
-    bolts = [[38, 52], [242, 52], [48, 224], [232, 224]]
+    # 6. Chassis Bolts (Perimeter Corner Screws - Repositioned to clear lowered grid)
+    bolts = [[36, 54], [244, 54], [48, 228], [232, 228]]
     for bx, by in bolts:
-        draw.ellipse([bx - 6, by - 6, bx + 6, by + 6], fill=(64, 69, 74, 255))
-        draw.ellipse([bx - 4, by - 4, bx + 4, by + 4], fill=(40, 44, 48, 255))
-        draw.line([bx - 3, by - 3, bx + 3, by + 3], fill=(16, 18, 20, 255), width=1)
+        draw.ellipse([bx - 5, by - 5, bx + 5, by + 5], fill=(64, 69, 74, 255))
+        draw.ellipse([bx - 3, by - 3, bx + 3, by + 3], fill=(40, 44, 48, 255))
+        draw.line([bx - 2, by - 2, bx + 2, by + 2], fill=(16, 18, 20, 255), width=1)
 
-    # 10. Circular mask for 280x280 round display
+    # 7. Circular mask for 280x280 round display
     mask = Image.new("L", (w, h), 0)
     mask_draw = ImageDraw.Draw(mask)
     mask_draw.ellipse([0, 0, w - 1, h - 1], fill=255)
     output = Image.new("RGBA", (w, h), (0, 0, 0, 255))
     output.paste(img, (0, 0), mask)
 
-    output.save("preview_full.png")
-    print("Successfully generated preview_full.png")
+    output.save(output_path)
+    print(f"Successfully generated {output_path} (lit={lit})")
+
+def render_all_digits_preview(output_path="all_digits_preview.png"):
+    w, h = 434, 114
+    img = Image.new("RGBA", (w, h), (8, 16, 12, 255))
+    draw = ImageDraw.Draw(img)
+
+    try:
+        font_lbl = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", 9)
+    except:
+        font_lbl = ImageFont.load_default()
+
+    trace_col = (18, 36, 24, 255)
+    via_pad = (58, 50, 24, 255)
+    silk_col = (55, 80, 65, 255)
+
+    # Top & bottom PCB bus rails
+    draw.line([10, 14, w - 10, 14], fill=trace_col, width=1)
+    draw.line([10, 104, w - 10, 104], fill=trace_col, width=1)
+
+    tube_w, tube_h = 38, 70
+    tube_y = 24
+
+    for d in range(10):
+        tx = 8 + d * 42
+
+        # Feeder trace & via
+        draw.line([tx + 19, 14, tx + 19, tube_y - 2], fill=trace_col, width=1)
+        draw.ellipse([tx + 17, 12, tx + 21, 16], fill=via_pad)
+        draw.ellipse([tx + 18, 13, tx + 20, 15], fill=(8, 16, 12, 255))
+
+        draw.line([tx + 19, tube_y + tube_h + 4, tx + 19, 104], fill=trace_col, width=1)
+        draw.ellipse([tx + 17, 102, tx + 21, 106], fill=via_pad)
+        draw.ellipse([tx + 18, 103, tx + 20, 105], fill=(8, 16, 12, 255))
+
+        # Tube & 7-Segment digit
+        draw_7seg_nixie_tube(draw, tx, tube_y, tube_w, tube_h, d)
+
+        # Label above tube
+        lbl = f"[{d}]"
+        bbox = font_lbl.getbbox(lbl)
+        lw = bbox[2] - bbox[0]
+        draw.text((tx + 19 - lw // 2, 4), lbl, font=font_lbl, fill=silk_col)
+
+    img.save(output_path)
+    print(f"Successfully generated {output_path}")
 
 if __name__ == "__main__":
-    render_watchface()
+    # Generate lit preview as standard preview_full.png
+    render_watchface(lit=True, output_path="preview_full.png")
+    # Also generate unlit preview as preview_dark.png
+    render_watchface(lit=False, output_path="preview_dark.png")
+    # Generate all digits preview (0-9)
+    render_all_digits_preview(output_path="all_digits_preview.png")

@@ -24,10 +24,10 @@
     "configMax" : null,
     "configMaxLength" : null
   }, {
-    "key" : "SlotUpperLeft",
+    "key" : "SlotMidLeft",
     "valueType" : "number",
-    "defaultValue" : 10,
-    "configTitle" : "SlotUpperLeftTitle",
+    "defaultValue" : 9,
+    "configTitle" : "SlotMidLeftTitle",
     "configPrompt" : null,
     "configType" : "list",
     "configError" : null,
@@ -70,15 +70,18 @@
     }, {
       "display" : "MetricBodyBattery",
       "value" : 11
+    }, {
+      "display" : "MetricWeatherFeelsLike",
+      "value" : 12
     } ],
     "configMin" : null,
     "configMax" : null,
     "configMaxLength" : null
   }, {
-    "key" : "SlotUpperRight",
+    "key" : "SlotMidCenter",
     "valueType" : "number",
-    "defaultValue" : 6,
-    "configTitle" : "SlotUpperRightTitle",
+    "defaultValue" : 1,
+    "configTitle" : "SlotMidCenterTitle",
     "configPrompt" : null,
     "configType" : "list",
     "configError" : null,
@@ -121,6 +124,63 @@
     }, {
       "display" : "MetricBodyBattery",
       "value" : 11
+    }, {
+      "display" : "MetricWeatherFeelsLike",
+      "value" : 12
+    } ],
+    "configMin" : null,
+    "configMax" : null,
+    "configMaxLength" : null
+  }, {
+    "key" : "SlotMidRight",
+    "valueType" : "number",
+    "defaultValue" : 12,
+    "configTitle" : "SlotMidRightTitle",
+    "configPrompt" : null,
+    "configType" : "list",
+    "configError" : null,
+    "configHelpUrl" : null,
+    "configReadonly" : false,
+    "configRequired" : false,
+    "configOptions" : [ {
+      "display" : "MetricNone",
+      "value" : 0
+    }, {
+      "display" : "MetricHeartRate",
+      "value" : 1
+    }, {
+      "display" : "MetricBattery",
+      "value" : 2
+    }, {
+      "display" : "MetricSteps",
+      "value" : 3
+    }, {
+      "display" : "MetricCalories",
+      "value" : 4
+    }, {
+      "display" : "MetricDistance",
+      "value" : 5
+    }, {
+      "display" : "MetricWeather",
+      "value" : 6
+    }, {
+      "display" : "MetricSunriseSunset",
+      "value" : 7
+    }, {
+      "display" : "MetricActiveMinutes",
+      "value" : 8
+    }, {
+      "display" : "MetricFloors",
+      "value" : 9
+    }, {
+      "display" : "MetricAltitude",
+      "value" : 10
+    }, {
+      "display" : "MetricBodyBattery",
+      "value" : 11
+    }, {
+      "display" : "MetricWeatherFeelsLike",
+      "value" : 12
     } ],
     "configMin" : null,
     "configMax" : null,
@@ -128,7 +188,7 @@
   }, {
     "key" : "SlotLowerLeft",
     "valueType" : "number",
-    "defaultValue" : 4,
+    "defaultValue" : 3,
     "configTitle" : "SlotLowerLeftTitle",
     "configPrompt" : null,
     "configType" : "list",
@@ -172,57 +232,9 @@
     }, {
       "display" : "MetricBodyBattery",
       "value" : 11
-    } ],
-    "configMin" : null,
-    "configMax" : null,
-    "configMaxLength" : null
-  }, {
-    "key" : "SlotLowerCenter",
-    "valueType" : "number",
-    "defaultValue" : 3,
-    "configTitle" : "SlotLowerCenterTitle",
-    "configPrompt" : null,
-    "configType" : "list",
-    "configError" : null,
-    "configHelpUrl" : null,
-    "configReadonly" : false,
-    "configRequired" : false,
-    "configOptions" : [ {
-      "display" : "MetricNone",
-      "value" : 0
     }, {
-      "display" : "MetricHeartRate",
-      "value" : 1
-    }, {
-      "display" : "MetricBattery",
-      "value" : 2
-    }, {
-      "display" : "MetricSteps",
-      "value" : 3
-    }, {
-      "display" : "MetricCalories",
-      "value" : 4
-    }, {
-      "display" : "MetricDistance",
-      "value" : 5
-    }, {
-      "display" : "MetricWeather",
-      "value" : 6
-    }, {
-      "display" : "MetricSunriseSunset",
-      "value" : 7
-    }, {
-      "display" : "MetricActiveMinutes",
-      "value" : 8
-    }, {
-      "display" : "MetricFloors",
-      "value" : 9
-    }, {
-      "display" : "MetricAltitude",
-      "value" : 10
-    }, {
-      "display" : "MetricBodyBattery",
-      "value" : 11
+      "display" : "MetricWeatherFeelsLike",
+      "value" : 12
     } ],
     "configMin" : null,
     "configMax" : null,
@@ -230,7 +242,7 @@
   }, {
     "key" : "SlotLowerRight",
     "valueType" : "number",
-    "defaultValue" : 1,
+    "defaultValue" : 4,
     "configTitle" : "SlotLowerRightTitle",
     "configPrompt" : null,
     "configType" : "list",
@@ -274,66 +286,18 @@
     }, {
       "display" : "MetricBodyBattery",
       "value" : 11
+    }, {
+      "display" : "MetricWeatherFeelsLike",
+      "value" : 12
     } ],
     "configMin" : null,
     "configMax" : null,
     "configMaxLength" : null
   }, {
-    "key" : "SlotBottomDistance",
-    "valueType" : "number",
-    "defaultValue" : 5,
-    "configTitle" : "SlotBottomDistanceTitle",
-    "configPrompt" : null,
-    "configType" : "list",
-    "configError" : null,
-    "configHelpUrl" : null,
-    "configReadonly" : false,
-    "configRequired" : false,
-    "configOptions" : [ {
-      "display" : "MetricNone",
-      "value" : 0
-    }, {
-      "display" : "MetricHeartRate",
-      "value" : 1
-    }, {
-      "display" : "MetricBattery",
-      "value" : 2
-    }, {
-      "display" : "MetricSteps",
-      "value" : 3
-    }, {
-      "display" : "MetricCalories",
-      "value" : 4
-    }, {
-      "display" : "MetricDistance",
-      "value" : 5
-    }, {
-      "display" : "MetricWeather",
-      "value" : 6
-    }, {
-      "display" : "MetricSunriseSunset",
-      "value" : 7
-    }, {
-      "display" : "MetricActiveMinutes",
-      "value" : 8
-    }, {
-      "display" : "MetricFloors",
-      "value" : 9
-    }, {
-      "display" : "MetricAltitude",
-      "value" : 10
-    }, {
-      "display" : "MetricBodyBattery",
-      "value" : 11
-    } ],
-    "configMin" : null,
-    "configMax" : null,
-    "configMaxLength" : null
-  }, {
-    "key" : "SlotBottomBodyBattery",
+    "key" : "SlotBottom",
     "valueType" : "number",
     "defaultValue" : 11,
-    "configTitle" : "SlotBottomBodyBatteryTitle",
+    "configTitle" : "SlotBottomTitle",
     "configPrompt" : null,
     "configType" : "list",
     "configError" : null,
@@ -376,6 +340,9 @@
     }, {
       "display" : "MetricBodyBattery",
       "value" : 11
+    }, {
+      "display" : "MetricWeatherFeelsLike",
+      "value" : 12
     } ],
     "configMin" : null,
     "configMax" : null,
@@ -393,30 +360,30 @@
       "MetricHeartRate" : "Heart Rate",
       "MetricDistance" : "Distance",
       "MetricSteps" : "Steps",
-      "SlotUpperRightTitle" : "Upper Right Slot (Weather)",
-      "SlotBottomBodyBatteryTitle" : "Bottom Body Battery Slot",
       "AppName" : "MetroDisplay",
+      "SlotMidLeftTitle" : "Middle Left Slot (Floors)",
+      "SlotMidRightTitle" : "Middle Right Slot (Weather & Feels-Like)",
       "ColorRed" : "Red",
-      "SlotLowerRightTitle" : "Lower Right Slot (Heart Rate)",
-      "MetricWeather" : "Weather / Temperature",
+      "SlotLowerRightTitle" : "Lower Right Slot (Calories)",
+      "MetricWeather" : "Weather (Current Temp)",
       "ColorWhite" : "White",
-      "SlotLowerCenterTitle" : "Lower Center Slot (Steps)",
       "ColorLightGray" : "Light Gray",
       "MetricSunriseSunset" : "Sunrise / Sunset",
       "ColorDarkGray" : "Dark Gray",
       "SunlightModeTitle" : "Sunlight Tube Mode",
       "MilitaryFormatTitle" : "Military Format for 24 Hour Time",
       "ColorBlack" : "Black",
-      "SlotUpperLeftTitle" : "Upper Left Slot (Altitude)",
       "MetricBattery" : "Battery",
       "MetricCalories" : "Calories",
       "MetricBodyBattery" : "Body Battery",
+      "SlotBottomTitle" : "Bottom Slot (Body Battery)",
       "MetricFloors" : "Floors Climbed",
       "ForegroundColorTitle" : "Foreground Color",
       "SunlightLit" : "Simulate: In Sunlight (Lit)",
-      "SlotBottomDistanceTitle" : "Bottom Distance Slot",
+      "SlotMidCenterTitle" : "Middle Center Slot (Heart Rate)",
+      "MetricWeatherFeelsLike" : "Temp & Feels-Like",
       "SunlightAuto" : "Auto (Sunrise / Sunset)",
-      "SlotLowerLeftTitle" : "Lower Left Slot (Calories)"
+      "SlotLowerLeftTitle" : "Lower Left Slot (Steps)"
     }
   }
 }

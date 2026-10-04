@@ -151,12 +151,12 @@ _home_x13_Projects_garmin_metro_MetroDisplay_bin_gen_006_B3907_00_source_Rez_mcg
         var MetricDistance as ResourceId;
         [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 31; @position = 27; initialized = true; @symbol_vardef = [MetricSteps,31,27,38]; @symbol_type<0> = [ResourceId,31,42,52]; ]
         var MetricSteps as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 32; @position = 27; initialized = true; @symbol_vardef = [SlotUpperRightTitle,32,27,46]; @symbol_type<0> = [ResourceId,32,50,60]; ]
-        var SlotUpperRightTitle as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 33; @position = 27; initialized = true; @symbol_vardef = [SlotBottomBodyBatteryTitle,33,27,53]; @symbol_type<0> = [ResourceId,33,57,67]; ]
-        var SlotBottomBodyBatteryTitle as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 34; @position = 27; initialized = true; @symbol_vardef = [AppName,34,27,34]; @symbol_type<0> = [ResourceId,34,38,48]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 32; @position = 27; initialized = true; @symbol_vardef = [AppName,32,27,34]; @symbol_type<0> = [ResourceId,32,38,48]; ]
         var AppName as ResourceId;
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 33; @position = 27; initialized = true; @symbol_vardef = [SlotMidLeftTitle,33,27,43]; @symbol_type<0> = [ResourceId,33,47,57]; ]
+        var SlotMidLeftTitle as ResourceId;
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 34; @position = 27; initialized = true; @symbol_vardef = [SlotMidRightTitle,34,27,44]; @symbol_type<0> = [ResourceId,34,48,58]; ]
+        var SlotMidRightTitle as ResourceId;
         [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 35; @position = 27; initialized = true; @symbol_vardef = [ColorRed,35,27,35]; @symbol_type<0> = [ResourceId,35,39,49]; ]
         var ColorRed as ResourceId;
         [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 36; @position = 27; initialized = true; @symbol_vardef = [SlotLowerRightTitle,36,27,46]; @symbol_type<0> = [ResourceId,36,50,60]; ]
@@ -165,36 +165,36 @@ _home_x13_Projects_garmin_metro_MetroDisplay_bin_gen_006_B3907_00_source_Rez_mcg
         var MetricWeather as ResourceId;
         [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 38; @position = 27; initialized = true; @symbol_vardef = [ColorWhite,38,27,37]; @symbol_type<0> = [ResourceId,38,41,51]; ]
         var ColorWhite as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 39; @position = 27; initialized = true; @symbol_vardef = [SlotLowerCenterTitle,39,27,47]; @symbol_type<0> = [ResourceId,39,51,61]; ]
-        var SlotLowerCenterTitle as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 40; @position = 27; initialized = true; @symbol_vardef = [ColorLightGray,40,27,41]; @symbol_type<0> = [ResourceId,40,45,55]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 39; @position = 27; initialized = true; @symbol_vardef = [ColorLightGray,39,27,41]; @symbol_type<0> = [ResourceId,39,45,55]; ]
         var ColorLightGray as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 41; @position = 27; initialized = true; @symbol_vardef = [MetricSunriseSunset,41,27,46]; @symbol_type<0> = [ResourceId,41,50,60]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 40; @position = 27; initialized = true; @symbol_vardef = [MetricSunriseSunset,40,27,46]; @symbol_type<0> = [ResourceId,40,50,60]; ]
         var MetricSunriseSunset as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 42; @position = 27; initialized = true; @symbol_vardef = [ColorDarkGray,42,27,40]; @symbol_type<0> = [ResourceId,42,44,54]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 41; @position = 27; initialized = true; @symbol_vardef = [ColorDarkGray,41,27,40]; @symbol_type<0> = [ResourceId,41,44,54]; ]
         var ColorDarkGray as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 43; @position = 27; initialized = true; @symbol_vardef = [SunlightModeTitle,43,27,44]; @symbol_type<0> = [ResourceId,43,48,58]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 42; @position = 27; initialized = true; @symbol_vardef = [SunlightModeTitle,42,27,44]; @symbol_type<0> = [ResourceId,42,48,58]; ]
         var SunlightModeTitle as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 44; @position = 27; initialized = true; @symbol_vardef = [MilitaryFormatTitle,44,27,46]; @symbol_type<0> = [ResourceId,44,50,60]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 43; @position = 27; initialized = true; @symbol_vardef = [MilitaryFormatTitle,43,27,46]; @symbol_type<0> = [ResourceId,43,50,60]; ]
         var MilitaryFormatTitle as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 45; @position = 27; initialized = true; @symbol_vardef = [ColorBlack,45,27,37]; @symbol_type<0> = [ResourceId,45,41,51]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 44; @position = 27; initialized = true; @symbol_vardef = [ColorBlack,44,27,37]; @symbol_type<0> = [ResourceId,44,41,51]; ]
         var ColorBlack as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 46; @position = 27; initialized = true; @symbol_vardef = [SlotUpperLeftTitle,46,27,45]; @symbol_type<0> = [ResourceId,46,49,59]; ]
-        var SlotUpperLeftTitle as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 47; @position = 27; initialized = true; @symbol_vardef = [MetricBattery,47,27,40]; @symbol_type<0> = [ResourceId,47,44,54]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 45; @position = 27; initialized = true; @symbol_vardef = [MetricBattery,45,27,40]; @symbol_type<0> = [ResourceId,45,44,54]; ]
         var MetricBattery as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 48; @position = 27; initialized = true; @symbol_vardef = [MetricCalories,48,27,41]; @symbol_type<0> = [ResourceId,48,45,55]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 46; @position = 27; initialized = true; @symbol_vardef = [MetricCalories,46,27,41]; @symbol_type<0> = [ResourceId,46,45,55]; ]
         var MetricCalories as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 49; @position = 27; initialized = true; @symbol_vardef = [MetricBodyBattery,49,27,44]; @symbol_type<0> = [ResourceId,49,48,58]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 47; @position = 27; initialized = true; @symbol_vardef = [MetricBodyBattery,47,27,44]; @symbol_type<0> = [ResourceId,47,48,58]; ]
         var MetricBodyBattery as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 50; @position = 27; initialized = true; @symbol_vardef = [MetricFloors,50,27,39]; @symbol_type<0> = [ResourceId,50,43,53]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 48; @position = 27; initialized = true; @symbol_vardef = [SlotBottomTitle,48,27,42]; @symbol_type<0> = [ResourceId,48,46,56]; ]
+        var SlotBottomTitle as ResourceId;
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 49; @position = 27; initialized = true; @symbol_vardef = [MetricFloors,49,27,39]; @symbol_type<0> = [ResourceId,49,43,53]; ]
         var MetricFloors as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 51; @position = 27; initialized = true; @symbol_vardef = [ForegroundColorTitle,51,27,47]; @symbol_type<0> = [ResourceId,51,51,61]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 50; @position = 27; initialized = true; @symbol_vardef = [ForegroundColorTitle,50,27,47]; @symbol_type<0> = [ResourceId,50,51,61]; ]
         var ForegroundColorTitle as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 52; @position = 27; initialized = true; @symbol_vardef = [SunlightLit,52,27,38]; @symbol_type<0> = [ResourceId,52,42,52]; ]
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 51; @position = 27; initialized = true; @symbol_vardef = [SunlightLit,51,27,38]; @symbol_type<0> = [ResourceId,51,42,52]; ]
         var SunlightLit as ResourceId;
-        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 53; @position = 27; initialized = true; @symbol_vardef = [SlotBottomDistanceTitle,53,27,50]; @symbol_type<0> = [ResourceId,53,54,64]; ]
-        var SlotBottomDistanceTitle as ResourceId;
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 52; @position = 27; initialized = true; @symbol_vardef = [SlotMidCenterTitle,52,27,45]; @symbol_type<0> = [ResourceId,52,49,59]; ]
+        var SlotMidCenterTitle as ResourceId;
+        [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 53; @position = 27; initialized = true; @symbol_vardef = [MetricWeatherFeelsLike,53,27,49]; @symbol_type<0> = [ResourceId,53,53,63]; ]
+        var MetricWeatherFeelsLike as ResourceId;
         [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 54; @position = 27; initialized = true; @symbol_vardef = [SunlightAuto,54,27,39]; @symbol_type<0> = [ResourceId,54,43,53]; ]
         var SunlightAuto as ResourceId;
         [ @file = "/home/x13/Projects/garmin_metro/MetroDisplay/bin/gen/006-B3907-00/source/Rez.mcgen"; @line = 55; @position = 27; initialized = true; @symbol_vardef = [SlotLowerLeftTitle,55,27,45]; @symbol_type<0> = [ResourceId,55,49,59]; ]
