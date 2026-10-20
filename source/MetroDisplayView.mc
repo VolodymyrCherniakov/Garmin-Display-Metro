@@ -61,15 +61,15 @@ class MetroDisplayView extends WatchUi.WatchFace {
         ICON_STAIRS       = 14
     }
 
-    // Display geometry (280x280 for fenix7x)
-    private var _screenW as Lang.Number = 280;
-    private var _centerX as Lang.Number = 140;
+    // Display geometry (280x280 for fenix7x) - see ThemeConstants
+    private var _screenW as Lang.Number = SCREEN_W;
+    private var _centerX as Lang.Number = CENTER_X;
 
-    // Centered 8-bit Nixie tube layout coordinates (Y: 105 - 175, Center Y = 140)
-    private var _tubeW as Lang.Number = 38;
-    private var _tubeH as Lang.Number = 70;
-    private var _tubeY as Lang.Number = 105;
-    private var _tubeXs as Lang.Array<Lang.Number> = [54, 96, 146, 188];
+    // Centered 8-bit Nixie tube layout coordinates (Y: 105 - 175, Center Y = 140) - see ThemeConstants
+    private var _tubeW as Lang.Number = TUBE_W;
+    private var _tubeH as Lang.Number = TUBE_H;
+    private var _tubeY as Lang.Number = TUBE_Y;
+    private var _tubeXs as Lang.Array<Lang.Number> = TUBE_XS;
 
     // 7-Segment Display Bitmasks for Digits 0-9
     // Segments: a=bit0(1), b=bit1(2), c=bit2(4), d=bit3(8), e=bit4(16), f=bit5(32), g=bit6(64)
@@ -108,6 +108,60 @@ class MetroDisplayView extends WatchUi.WatchFace {
         [5, 26, 21, 26]  // g
     ];
 
+    // ------------------------------------------------------------------
+    // Centralized Theme Constants (colors, dimensions, fonts)
+    // ------------------------------------------------------------------
+    // Nixie Tube Color Palette (Orange-Amber Glow)
+    static const COLOR_HALO_OUTER      = 0x882200; // Deep glowing red-orange plasma halo
+    static const COLOR_GLOW_MID        = 0xFF5500; // Bright neon orange
+    static const COLOR_CORE_HOT        = 0xFFFF66; // White-hot filament center
+    static const COLOR_GHOST_FILAMENT  = 0x22140A; // Dim unlit cathode wire in background
+    static const COLOR_TUBE_GLASS_BG   = 0x0A0D0B; // Deep dark cavity inside tube
+    static const COLOR_TUBE_BORDER     = 0x38423E; // Outer glass capsule rim
+    static const COLOR_TUBE_HIGHLIGHT  = 0x587880; // Specular glass reflection
+    static const COLOR_MESH_GRID       = 0x1A221C; // Anode wire mesh grid
+    static const COLOR_SOCKET_BASE     = 0x1F2426; // Stamped metal socket base
+    static const COLOR_SOCKET_BORDER   = 0x101314; // Socket outline
+
+    // Top Sunlight Neon Tube Palette (Electric Cyan & Ice-Blue Glow)
+    static const COLOR_SUN_HALO        = 0x0055AA; // Brilliant electric cobalt bloom
+    static const COLOR_SUN_GLOW_MID    = 0x00CCFF; // Vibrant neon cyan beam
+    static const COLOR_SUN_CORE_HOT    = 0xFFFFFF; // White-hot center filament
+    static const COLOR_SUN_OFF_BG      = 0x0A1014; // Dark cavity when unlit
+    static const COLOR_SUN_OFF_RIM     = 0x2A343A; // Unlit glass border
+    static const COLOR_SUN_OFF_WIRE    = 0x222C32; // Unlit grey tungsten wire
+    static const COLOR_SUN_BRACKET     = 0x5A4830; // Stamped copper bracket
+    static const COLOR_SUN_BRACKET_RIM = 0x382C1E; // Bracket outline
+    static const COLOR_SUN_RIVET       = 0x9C7E4C; // Copper rivets
+
+    // PCB Background Colors (Muted, Darker Outside Traces)
+    static const COLOR_PCB_BG          = 0x08100C; // Dark industrial solder mask
+    static const COLOR_PCB_TRACE       = 0x122418; // Muted, dark copper/green trace
+    static const COLOR_PCB_VIA_PAD     = 0x3A3218; // Muted gold solder via pad
+    static const COLOR_PCB_SILK        = 0x233428; // Silkscreen markings
+    static const COLOR_SCREW_RIM       = 0x40454A; // Perimeter chassis screw rim
+    static const COLOR_SCREW_HEAD      = 0x282C30; // Screw head face
+    static const COLOR_SCREW_SLOT      = 0x101214; // Screw drive slot
+
+    // Tactical Plates & Phosphor Text Colors
+    static const COLOR_PLATE_BG        = 0x0C1410; // Dark stamped plate
+    static const COLOR_PLATE_BORDER    = 0x24362A; // Single 1px border rim
+    static const COLOR_TEXT_AMBER      = 0xFFAA00; // Phosphor amber
+    static const COLOR_TEXT_ORANGE     = 0xFF7700; // Phosphor orange
+    static const COLOR_TEXT_GREEN      = 0x00FF88; // Phosphor electric green
+    static const COLOR_TEXT_CYAN       = 0x00D0FF; // Phosphor ice cyan
+    static const COLOR_TEXT_RED        = 0xFF3300; // Warning red
+
+    // Display Geometry (280x280 for fenix7x)
+    static const SCREEN_W              = 280;
+    static const CENTER_X              = 140;
+
+    // Centered 8-bit Nixie tube layout coordinates (Y: 105 - 175, Center Y = 140)
+    static const TUBE_W                = 38;
+    static const TUBE_H                = 70;
+    static const TUBE_Y                = 105;
+    static const TUBE_XS               = [54, 96, 146, 188];
+
     // Pre-allocated per-tube segment polygons & spine lines (zero GC allocations in onUpdate)
     private var _tubePolygons as Lang.Array<Lang.Array<Lang.Array<[Lang.Numeric, Lang.Numeric]> > >?;
     private var _tubeSpines as Lang.Array<Lang.Array<Lang.Array<Lang.Number> > >?;
@@ -126,47 +180,6 @@ class MetroDisplayView extends WatchUi.WatchFace {
     private var _slotLowerRight as Lang.Number = 4;    // Calories
     private var _slotBottom as Lang.Number = 11;       // Body Battery
 
-    // Nixie tube color palette (Orange-Amber Glow)
-    private const COLOR_HALO_OUTER      = 0x882200; // Deep glowing red-orange plasma halo
-    private const COLOR_GLOW_MID        = 0xFF5500; // Bright neon orange
-    private const COLOR_CORE_HOT        = 0xFFFF66; // White-hot filament center
-    private const COLOR_GHOST_FILAMENT  = 0x22140A; // Dim unlit cathode wire in background
-    private const COLOR_TUBE_GLASS_BG   = 0x0A0D0B; // Deep dark cavity inside tube
-    private const COLOR_TUBE_BORDER     = 0x38423E; // Outer glass capsule rim
-    private const COLOR_TUBE_HIGHLIGHT  = 0x587880; // Specular glass reflection
-    private const COLOR_MESH_GRID       = 0x1A221C; // Anode wire mesh grid
-    private const COLOR_SOCKET_BASE     = 0x1F2426; // Stamped metal socket base
-    private const COLOR_SOCKET_BORDER   = 0x101314; // Socket outline
-
-    // Top Sunlight Neon Tube Palette (Electric Cyan & Ice-Blue Glow)
-    private const COLOR_SUN_HALO        = 0x0055AA; // Brilliant electric cobalt bloom
-    private const COLOR_SUN_GLOW_MID    = 0x00CCFF; // Vibrant neon cyan beam
-    private const COLOR_SUN_CORE_HOT    = 0xFFFFFF; // White-hot center filament
-    private const COLOR_SUN_OFF_BG      = 0x0A1014; // Dark cavity when unlit
-    private const COLOR_SUN_OFF_RIM     = 0x2A343A; // Unlit glass border
-    private const COLOR_SUN_OFF_WIRE    = 0x222C32; // Unlit grey tungsten wire
-    private const COLOR_SUN_BRACKET     = 0x5A4830; // Stamped copper bracket
-    private const COLOR_SUN_BRACKET_RIM = 0x382C1E; // Bracket outline
-    private const COLOR_SUN_RIVET       = 0x9C7E4C; // Copper rivets
-
-    // PCB background colors (Muted, Darker Outside Traces)
-    private const COLOR_PCB_BG          = 0x08100C; // Dark industrial solder mask
-    private const COLOR_PCB_TRACE       = 0x122418; // Muted, dark copper/green trace
-    private const COLOR_PCB_VIA_PAD     = 0x3A3218; // Muted gold solder via pad
-    private const COLOR_PCB_SILK        = 0x233428; // Silkscreen markings
-    private const COLOR_SCREW_RIM       = 0x40454A; // Perimeter chassis screw rim
-    private const COLOR_SCREW_HEAD      = 0x282C30; // Screw head face
-    private const COLOR_SCREW_SLOT      = 0x101214; // Screw drive slot
-
-    // Tactical Plates & Phosphor Colors
-    private const COLOR_PLATE_BG        = 0x0C1410; // Dark stamped plate
-    private const COLOR_PLATE_BORDER    = 0x24362A; // Single 1px border rim
-    private const COLOR_TEXT_AMBER      = 0xFFAA00; // Phosphor amber
-    private const COLOR_TEXT_ORANGE     = 0xFF7700; // Phosphor orange
-    private const COLOR_TEXT_GREEN      = 0x00FF88; // Phosphor electric green
-    private const COLOR_TEXT_CYAN       = 0x00D0FF; // Phosphor ice cyan
-    private const COLOR_TEXT_RED        = 0xFF3300; // Warning red
- 
     // Static coordinate tables (prevent heap allocations in onUpdate)
     private const VIA_COORDS = [
         [96, 14], [184, 14],
@@ -226,10 +239,16 @@ class MetroDisplayView extends WatchUi.WatchFace {
         _screenW = dc.getWidth();
         _centerX = _screenW / 2;
 
-        _tubeW = 38;
-        _tubeH = 70;
-        _tubeY = 105;
-        _tubeXs = [54, 96, 146, 188];
+        _tubeW = TUBE_W;
+        _tubeH = TUBE_H;
+        _tubeY = TUBE_Y;
+        _tubeXs = TUBE_XS;
+
+        // Anti-aliasing capability is device-level and does not change at runtime,
+        // so enable it once here rather than every frame in onUpdate().
+        if (dc has :setAntiAlias) {
+            dc.setAntiAlias(true);
+        }
 
         var digitW = 26;
         var digitH = 52;
@@ -284,9 +303,6 @@ class MetroDisplayView extends WatchUi.WatchFace {
 
     //! Main Render Loop
     function onUpdate(dc as Graphics.Dc) as Void {
-        if (!_isSleepMode && dc has :setAntiAlias) {
-            dc.setAntiAlias(true);
-        }
 
         // 1. Draw Integrated PCB Background Grid Frame (Muted, Outside Only)
         drawPcbBackground(dc);

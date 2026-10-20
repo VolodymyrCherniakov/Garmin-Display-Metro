@@ -1,0 +1,21 @@
+# Build artifacts (Connect IQ SDK)
+bin/
+*.prg
+*.prg.debug.xml
+*.mir
+gen/
+mir/
+internal-mir/
+external-mir/
+
+# Settings (user-specific)
+*-settings.json
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
