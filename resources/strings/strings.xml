@@ -13,8 +13,8 @@
     <string id="ColorBlue">Blue</string>
     <string id="ColorRed">Red</string>
 
-    <string id="SunlightModeTitle">Sunlight Tube Mode</string>
-    <string id="SunlightAuto">Auto (Sunrise / Sunset)</string>
+    <string id="SunlightModeTitle">Blue Lamp Mode</string>
+    <string id="SunlightAuto">Auto (Solar Light Sensor)</string>
     <string id="SunlightLit">Simulate: In Sunlight (Lit)</string>
     <string id="SunlightDark">Simulate: In Darkness (Unlit)</string>
 

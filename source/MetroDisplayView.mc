@@ -311,8 +311,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
         drawTopBattery(dc);
 
         // 3. Row 2: Wider & Taller Sunlight / Ambient Tube Directly Below Battery (Y: ~25-38, Center Y = 31)
-        var isSunlit = isSunlitEnvironment();
-        drawTopSunlightTube(dc, isSunlit);
+        drawTopSunlightTube(dc, isSolarLampLit());
 
         // 4. Row 3: Scaled Nixie Clock (HH:MM) + INS-1 Colon + Sub-script Seconds + Side Icons (Y: 48-114)
         var clockTime = System.getClockTime();
@@ -360,7 +359,9 @@ class MetroDisplayView extends WatchUi.WatchFace {
         // Row A: Floors, Heart Rate, Weather & Feels-like
         // Row B: Steps, Calories
         // Row C: Body Battery
-        drawSeamlessGrid(dc, isSunlit);
+        // The sunrise/sunset metric follows daylight, independently of the
+        // solar lamp (which can be dark indoors even during the day).
+        drawSeamlessGrid(dc, isDaylight());
 
         // 6. Outer Industrial Chassis Bolts (Corner Screws)
         drawChassisBolts(dc);
@@ -402,25 +403,39 @@ class MetroDisplayView extends WatchUi.WatchFace {
     // =========================================================================
 
     public function toggleDebugSunlight() as Void {
+        // Automatic mode must always follow the sensor on the real watch.
+        // Touch toggling is reserved for explicitly selected simulation modes.
+        if (_sunlightMode == 0) {
+            return;
+        }
         if (_debugSunlightOverride == null) {
-            _debugSunlightOverride = !isSunlitEnvironment();
+            _debugSunlightOverride = !isSolarLampLit();
         } else {
             _debugSunlightOverride = !_debugSunlightOverride;
         }
         WatchUi.requestUpdate();
     }
 
-    private function isSunlitEnvironment() as Lang.Boolean {
-        if (_debugSunlightOverride != null) {
-            return _debugSunlightOverride as Lang.Boolean;
+    private function isSolarLampLit() as Lang.Boolean {
+        if (_sunlightMode == 1 || _sunlightMode == 2) {
+            if (_debugSunlightOverride != null) {
+                return _debugSunlightOverride as Lang.Boolean;
+            }
+            return _sunlightMode == 1;
         }
 
-        if (_sunlightMode == 1) {
-            return true;
-        } else if (_sunlightMode == 2) {
-            return false;
+        // solarIntensity measures solar charge efficiency, not ambient lux.
+        // Null means unsupported; a negative value means no solar charging.
+        // Do not substitute sunrise/sunset when there is no measured input.
+        var stats = System.getSystemStats();
+        if (stats has :solarIntensity) {
+            var intensity = stats.solarIntensity;
+            return intensity != null && intensity > 0;
         }
+        return false;
+    }
 
+    private function isDaylight() as Lang.Boolean {
         if (Toybox has :Weather && Weather has :getSunrise && Weather has :getSunset) {
             try {
                 var conditions = Weather.getCurrentConditions();
@@ -1269,15 +1284,26 @@ class MetroDisplayView extends WatchUi.WatchFace {
     private function getBodyBattery() as Lang.Number? {
         if (Toybox has :SensorHistory && SensorHistory has :getBodyBatteryHistory) {
             try {
-                var bbIter = SensorHistory.getBodyBatteryHistory({:period => 1, :order => SensorHistory.ORDER_NEWEST_FIRST});
+                // Some firmware returns an empty iterator when :period is 1.
+                // Leave the period unset and read recent samples newest first.
+                var bbIter = SensorHistory.getBodyBatteryHistory({:order => SensorHistory.ORDER_NEWEST_FIRST});
                 if (bbIter != null) {
-                    var sample = bbIter.next();
-                    if (sample != null && sample.data != null) {
-                        return sample.data as Lang.Number;
+                    // A recent sample can be missing; bound the fallback search
+                    // so a watch-face update never scans the whole history.
+                    for (var i = 0; i < 10; i++) {
+                        var sample = bbIter.next();
+                        if (sample == null) {
+                            break;
+                        }
+                        var value = sample.data;
+                        if ((value instanceof Lang.Number || value instanceof Lang.Float)
+                            && value >= 0 && value <= 100) {
+                            return value.toNumber();
+                        }
                     }
                 }
             } catch (e) {
-                // Ignore
+                // Sensor history may be temporarily unavailable.
             }
         }
         return null;
