@@ -2,8 +2,8 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 //! MetroDisplayDelegate
-//! Handles user interaction events on the watch face (touchscreen press/tap)
-//! to toggle simulated sunlight states in the simulator and on device.
+//! Handles touch-and-hold events to toggle explicitly selected lamp simulations.
+//! Automatic mode always follows the solar sensor and ignores this gesture.
 class MetroDisplayDelegate extends WatchUi.WatchFaceDelegate {
 
     private var _view as MetroDisplayView;
@@ -13,7 +13,7 @@ class MetroDisplayDelegate extends WatchUi.WatchFaceDelegate {
         _view = view;
     }
 
-    //! Handle touch press on watch face screen
+    //! Handle touch and hold on the watch face screen
     function onPress(clickEvent as WatchUi.ClickEvent) as Lang.Boolean {
         _view.toggleDebugSunlight();
         return true;

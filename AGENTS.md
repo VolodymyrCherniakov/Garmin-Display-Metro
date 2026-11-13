@@ -27,7 +27,7 @@ garmin_metro/
     ├── source/
     │   ├── MetroDisplayApp.mc                  # Application entry point & settings update dispatcher
     │   ├── MetroDisplayView.mc                 # Tactical dashboard engine, complications, & Nixie renderer
-    │   ├── MetroDisplayDelegate.mc             # WatchFaceDelegate handling touch tap toggle
+    │   ├── MetroDisplayDelegate.mc             # Touch-and-hold toggle in explicit lamp simulation modes
     │   └── MetroDisplayBackground.mc           # Background canvas drawable handler
     └── resources/
         ├── drawables/launcher_icon.svg         # App launcher icon
@@ -80,11 +80,12 @@ From inside the `MetroDisplay` directory (`/home/x13/Projects/garmin_metro/Metro
    - Enlarged dimensions: Width 116 px, Height 15 px ($X=82 - 198$).
    - Scaled copper brackets at ends ($8 \times 17$ px) with copper rivets.
    - Brighter electric cyan bloom and white-hot core in lit state. Dark cavity with cold tungsten wire in unlit state.
-   - Evaluated via `isSunlitEnvironment()`:
-     - Interactive Simulator Tap: `MetroDisplayDelegate` toggles `_debugSunlightOverride`.
-     - App Settings Override: `SunlightMode` (0: Auto, 1: Always Lit, 2: Always Dark).
-     - Astronomical: `Toybox.Weather.getSunrise()` / `getSunset()` based on GPS position.
-     - Fallback: Civil daylight hours (06:30 - 19:30).
+   - Evaluated via `isSolarLampLit()`:
+     - `SunlightMode = 0` (default): reads `System.getSystemStats().solarIntensity` each watch-face update. Any positive value lights the tube; zero, negative, missing, or unsupported readings leave it dark.
+     - This is solar charge efficiency (0-100), not ambient lux. Indoor lamps may report zero even when the screen looks brightly lit.
+     - Explicit simulation modes: `SunlightMode = 1` starts lit; `2` starts dark. Touch and hold toggles the simulation only in these modes. Automatic mode ignores this gesture.
+     - No sunrise/sunset or fixed-hours fallback controls the lamp. The separate `isDaylight()` helper retains those calculations for the configurable sunrise/sunset metric.
+     - Updates follow the standard WatchFace lifecycle: typically every second while awake and once a minute while asleep. No extra timer wakes the watch.
 
 3. **Row 3: Centered 7-Segment Nixie Clock, INS-1 Bulbs, Right-Side Seconds & Side Icons (Y: 105 - 175, Center Y = 140)**:
    - **Main Nixie Time (HH:MM)**: Centered vertically and horizontally around $(140, 140)$ ($W=38, H=70$ at $Y=105-175$) at $X=[54, 96, 146, 188]$.
