@@ -170,6 +170,11 @@ class MetroDisplayView extends WatchUi.WatchFace {
         "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"
     ];
     private var _displayFont as Graphics.FontType = Graphics.FONT_SYSTEM_XTINY;
+    // At Y=81 a 24px line fits safely inside the circular bezel at X=32..248,
+    // between the solar glow (through Y=60) and clock border (from Y=99).
+    private const DATE_CENTER_Y = 81;
+    private const DATE_MAX_WIDTH = 216;
+    private var _dateFont as Graphics.FontType = Graphics.FONT_SYSTEM_XTINY;
     private var _dateKey as Lang.Number = -1;
     private var _dateText as Lang.String = "";
 
@@ -246,6 +251,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
         _centerX = _screenW / 2;
         // Cache the bitmap font once per layout; no runtime font scaling.
         _displayFont = WatchUi.loadResource(Rez.Fonts.MetroReadable) as WatchUi.FontResource;
+        _dateKey = -1; // Refit after layout/font resources are reloaded.
 
         _tubeW = TUBE_W;
         _tubeH = TUBE_H;
@@ -387,23 +393,32 @@ class MetroDisplayView extends WatchUi.WatchFace {
         drawChassisBolts(dc);
     }
 
-    //! Refresh the formatted string only when the local calendar date changes.
+    //! Cache text and font until local midnight changes, including manual date changes.
     private function drawDate(dc as Graphics.Dc) as Void {
-        var date = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-        var dateKey = date.year * 10000 + date.month * 100 + date.day;
+        // Avoid Gregorian.Info and formatting allocations on ordinary redraws.
+        // Do not divide UTC seconds by 86400: the watch displays the local date.
+        var today = Time.today();
+        var dateKey = today.value();
         if (dateKey != _dateKey) {
+            var date = Gregorian.info(today, Time.FORMAT_SHORT);
             _dateText = Lang.format("$1$.$2$.$3$, $4$", [
                 date.day.format("%02d"),
                 date.month.format("%02d"),
                 (date.year % 100).format("%02d"),
                 DATE_WEEKDAYS[date.day_of_week - 1]
             ]);
+            _dateFont = _displayFont;
+            if (dc.getTextWidthInPixels(_dateText, _dateFont) > DATE_MAX_WIDTH) {
+                // Fenix 7X system XTINY supports the complete English date and
+                // fits even WEDNESDAY; retain the full format without truncation.
+                _dateFont = Graphics.FONT_SYSTEM_XTINY;
+            }
             _dateKey = dateKey;
         }
 
         dc.setColor(COLOR_TEXT_AMBER, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            _centerX, 81, _displayFont, _dateText,
+            _centerX, DATE_CENTER_Y, _dateFont, _dateText,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
     }
