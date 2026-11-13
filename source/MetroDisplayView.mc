@@ -59,7 +59,8 @@ class MetroDisplayView extends WatchUi.WatchFace {
         ICON_VITALITY     = 11,
         ICON_BATTERY      = 12,
         ICON_HAZARD       = 13,
-        ICON_STAIRS       = 14
+        ICON_STAIRS       = 14,
+        ICON_NOTIFICATION = 15
     }
 
     // Display geometry (280x280 for fenix7x) - see ThemeConstants
@@ -153,6 +154,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
     // Display Geometry (280x280 for fenix7x)
     static const SCREEN_W              = 280;
     static const CENTER_X              = 140;
+    static const SIDE_ICON_INSET       = 20; // Symmetric anchors with room for notification dot
 
     // Larger tubes centered at (140, 140), clear of date, side icons and grid.
     static const TUBE_W                = 42;
@@ -618,7 +620,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
         var notifCount = settings.notificationCount;
 
         // --- Left Side: Bluetooth + Alarm Status (fixed positions) ---
-        var bx = 32;
+        var bx = SIDE_ICON_INSET;
         var hasAlarm = (alarmCount != null && alarmCount > 0);
         var colBt = isConnected ? COLOR_TEXT_AMBER : COLOR_TEXT_DIM;
         var colAlarm = hasAlarm ? COLOR_TEXT_AMBER : COLOR_TEXT_DIM;
@@ -628,7 +630,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
         drawBellIcon(dc, bx - 6, 143, colAlarm);
 
         // --- Right Side: Notification Status Icon (Y=125, clear of seconds at Y=167) ---
-        var px = 248;
+        var px = _screenW - SIDE_ICON_INSET;
         var py = 125;
         if (notifCount != null && notifCount > 0) {
             drawNotificationIcon(dc, px, py, COLOR_TEXT_AMBER);
@@ -794,7 +796,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
         // Prefer larger text, then fall back for long weather/distance readings.
         var font = _displayFont;
         var textW = dc.getTextWidthInPixels(text, font);
-        var gap = 3;
+        var gap = ICON_GAP;
         var availableW = cellWidth - 4; // Keep 2 px clear of each divider.
         if (iconW + gap + textW > availableW) {
             font = Graphics.FONT_SYSTEM_XTINY;
@@ -837,231 +839,143 @@ class MetroDisplayView extends WatchUi.WatchFace {
     // VECTOR ICON RENDERING SYSTEM
     // =========================================================================
 
-    private function drawIcon(dc as Graphics.Dc, x as Lang.Number, cy as Lang.Number, iconType as Lang.Number, col as Lang.Number) as Void {
-        dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(1);
+    // Pixel-aligned outline paths, indexed by IconType. Coordinates stay within
+    // the existing icon footprints; geometry is allocated once, never per frame.
+    // One-pixel strokes and open interiors keep small indicators equally weighted.
+    private const ICON_STROKE = 1;
+    private const ICON_GAP = 3;
+    private const ICON_PATHS = [
+        [], // None
+        [ // Altitude: two peaks with a single baseline
+            [[0, 13], [6, 1], [12, 13]],
+            [[10, 9], [13, 4], [17, 13], [0, 13]],
+            [[4, 5], [6, 7], [8, 5]]
+        ],
+        [ // Weather: continuous cloud contour, no overlapping internal circles
+            [[3, 12], [1, 11], [0, 9], [1, 6], [4, 5], [5, 2],
+             [8, 1], [11, 2], [12, 5], [14, 6], [15, 8], [15, 10],
+             [13, 12], [3, 12]]
+        ],
+        [ // Calendar
+            [[1, 3], [13, 3], [13, 13], [1, 13], [1, 3]],
+            [[1, 6], [13, 6]], [[4, 1], [4, 4]], [[10, 1], [10, 4]],
+            [[4, 9], [7, 9]]
+        ],
+        [ // Alarm bell, including crown and clapper
+            [[6, 0], [6, 1]],
+            [[0, 9], [2, 7], [2, 4], [3, 2], [5, 1], [7, 1],
+             [9, 2], [10, 4], [10, 7], [12, 9], [0, 9]],
+            [[5, 11], [7, 11]]
+        ],
+        [ // Bluetooth rune
+            [[6, 0], [6, 14]],
+            [[6, 0], [11, 4], [2, 10]],
+            [[2, 4], [11, 10], [6, 14]]
+        ],
+        [ // Phone
+            [[4, 0], [10, 0], [11, 1], [11, 13], [10, 14],
+             [4, 14], [3, 13], [3, 1], [4, 0]],
+            [[3, 11], [11, 11]], [[6, 13], [8, 13]]
+        ],
+        [ // Calories: a single flame with an open, legible center
+            [[8, 0], [8, 4], [11, 7], [13, 10], [12, 13],
+             [9, 15], [5, 15], [2, 12], [2, 9], [4, 6],
+             [4, 9], [6, 7], [8, 0]]
+        ],
+        [ // Steps: two separated sole outlines, staggered like footprints
+            [[2, 4], [4, 4], [5, 6], [5, 11], [4, 14],
+             [2, 14], [1, 12], [1, 7], [2, 4]],
+            [[10, 0], [12, 0], [13, 2], [13, 7], [12, 10],
+             [10, 10], [9, 8], [9, 3], [10, 0]]
+        ],
+        [ // Heart: symmetric lobes and a clean pointed base
+            [[7, 3], [5, 1], [2, 1], [0, 3], [0, 6],
+             [2, 9], [7, 14], [12, 9], [14, 6], [14, 3],
+             [12, 1], [9, 1], [7, 3]]
+        ],
+        [ // Distance: map pin with a separate center mark
+            [[6, 14], [1, 7], [1, 4], [3, 1], [6, 0],
+             [9, 1], [11, 4], [11, 7], [6, 14]],
+            [[5, 4], [7, 4], [7, 6], [5, 6], [5, 4]]
+        ],
+        [ // Vitality: head and balanced torso, no crowded interior lightning
+            [[6, 0], [8, 0], [9, 1], [9, 3], [8, 4],
+             [6, 4], [5, 3], [5, 1], [6, 0]],
+            [[2, 7], [4, 6], [10, 6], [12, 7], [11, 11],
+             [9, 14], [5, 14], [3, 11], [2, 7]]
+        ],
+        [ // Battery shell and terminal; level/charging state drawn separately
+            [[1, 0], [13, 0], [14, 1], [14, 8], [13, 9],
+             [1, 9], [0, 8], [0, 1], [1, 0]],
+            [[16, 3], [17, 3], [17, 6], [16, 6]]
+        ],
+        [ // Hazard
+            [[7, 0], [14, 13], [0, 13], [7, 0]],
+            [[7, 5], [7, 8]], [[7, 10], [7, 11]]
+        ],
+        [ // Floors: continuous ascending stair profile
+            [[0, 13], [0, 9], [4, 9], [4, 5], [9, 5],
+             [9, 1], [14, 1], [14, 13], [0, 13]]
+        ],
+        [ // Notification bubble with an integrated tail
+            [[1, 0], [11, 0], [12, 1], [12, 7], [11, 8],
+             [6, 8], [3, 11], [3, 8], [1, 8], [0, 7],
+             [0, 1], [1, 0]]
+        ]
+    ];
+    private const BATTERY_CHARGE_PATH = [[8, 1], [5, 5], [9, 5], [6, 8]];
 
-        switch (iconType) {
-            case ICON_ALTITUDE:
-                // Mountain icon (19x14 px)
-                var my = cy - 6;
-                dc.drawLine(x, my + 13, x + 18, my + 13);
-                dc.drawLine(x + 1, my + 13, x + 6, my + 1);
-                dc.drawLine(x + 6, my + 1, x + 11, my + 13);
-                dc.drawLine(x + 10, my + 13, x + 14, my + 5);
-                dc.drawLine(x + 14, my + 5, x + 18, my + 13);
-                break;
-
-            case ICON_WEATHER:
-                // Cloud / Weather icon (16x14 px)
-                var wy = cy - 6;
-                dc.drawLine(x + 3, wy + 11, x + 14, wy + 11);
-                dc.drawCircle(x + 5, wy + 8, 4);
-                dc.drawCircle(x + 10, wy + 6, 5);
-                dc.drawPoint(x + 14, wy + 3);
-                break;
-
-            case ICON_CALENDAR:
-                drawCalendarIcon(dc, x, cy - 6, col);
-                break;
-
-            case ICON_BELL:
-                drawBellIcon(dc, x, cy - 6, col);
-                break;
-
-            case ICON_BLUETOOTH:
-                drawBluetoothIcon(dc, x, cy, col);
-                break;
-
-            case ICON_PHONE:
-                drawPhoneIcon(dc, x, cy, col);
-                break;
-
-            case ICON_FLAME:
-                // Enlarged multi-point flame icon with licking tongue & inner core (15x17 px)
-                var fy = cy - 9;
-                dc.setColor(COLOR_TEXT_AMBER, Graphics.COLOR_TRANSPARENT);
-                dc.fillPolygon([
-                    [x + 6, fy],
-                    [x + 10, fy + 4],
-                    [x + 14, fy + 9],
-                    [x + 13, fy + 14],
-                    [x + 9, fy + 16],
-                    [x + 4, fy + 16],
-                    [x + 1, fy + 13],
-                    [x + 1, fy + 8],
-                    [x + 5, fy + 5],
-                    [x + 4, fy + 1]
-                ]);
-                dc.setColor(COLOR_TEXT_AMBER, Graphics.COLOR_TRANSPARENT);
-                dc.fillPolygon([
-                    [x + 6, fy + 5],
-                    [x + 10, fy + 10],
-                    [x + 9, fy + 14],
-                    [x + 5, fy + 14],
-                    [x + 5, fy + 9]
-                ]);
-                break;
-
-            case ICON_STEPS:
-                // Footsteps icon (15x15 px)
-                var sy = cy - 8;
-                dc.fillRoundedRectangle(x, sy + 5, 5, 9, 1);
-                dc.fillCircle(x + 3, sy + 3, 3);
-                dc.fillRoundedRectangle(x + 9, sy, 5, 9, 1);
-                dc.fillCircle(x + 11, sy + 11, 3);
-                break;
-
-            case ICON_HEART:
-                // Heart icon (16x15 px)
-                var hy = cy - 8;
-                dc.fillCircle(x + 4, hy + 4, 4);
-                dc.fillCircle(x + 11, hy + 4, 4);
-                dc.fillPolygon([
-                    [x, hy + 4],
-                    [x + 15, hy + 4],
-                    [x + 8, hy + 14]
-                ]);
-                break;
-
-            case ICON_DISTANCE:
-                // Location / Route pin icon (14x15 px)
-                var dy = cy - 8;
-                dc.drawCircle(x + 6, dy + 5, 5);
-                dc.drawPoint(x + 6, dy + 5);
-                dc.drawLine(x + 1, dy + 6, x + 6, dy + 14);
-                dc.drawLine(x + 11, dy + 6, x + 6, dy + 14);
-                break;
-
-            case ICON_VITALITY:
-                // Body Battery / Vitality human silhouette with energy core (15x18 px)
-                drawVitalityIcon(dc, x, cy, col);
-                break;
-
-            case ICON_BATTERY:
-                drawBatteryIcon(dc, x, cy - 5, getBatteryPercent(), isBatteryCharging(), col);
-                break;
-
-            case ICON_HAZARD:
-                drawHazardIcon(dc, x, cy - 6, col);
-                break;
-
-            case ICON_STAIRS:
-                // Ascending staircase icon (15x15 px)
-                var sty = cy - 8;
-                dc.fillRectangle(x, sty + 10, 4, 5);
-                dc.fillRectangle(x + 5, sty + 5, 4, 10);
-                dc.fillRectangle(x + 10, sty, 4, 15);
-                break;
+    private function drawIconPath(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number,
+        path as Lang.Array<Lang.Array<Lang.Number> >) as Void {
+        for (var i = 1; i < path.size(); i++) {
+            dc.drawLine(x + path[i - 1][0], y + path[i - 1][1],
+                x + path[i][0], y + path[i][1]);
         }
     }
 
-    private function drawVitalityIcon(dc as Graphics.Dc, x as Lang.Number, cy as Lang.Number, col as Lang.Number) as Void {
+    private function drawIconOutline(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number,
+        iconType as Lang.Number, col as Lang.Number) as Void {
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(1);
-
-        var hy = cy - 9;
-
-        // Head
-        dc.fillCircle(x + 8, hy + 3, 3);
-
-        // Torso / shoulders silhouette
-        dc.drawLine(x + 1, hy + 6, x + 14, hy + 6);
-        dc.drawLine(x + 1, hy + 6, x + 3, hy + 14);
-        dc.drawLine(x + 14, hy + 6, x + 13, hy + 14);
-        dc.drawLine(x + 3, hy + 14, x + 8, hy + 16);
-        dc.drawLine(x + 13, hy + 14, x + 8, hy + 16);
-
-        // Glowing energy core inside chest
-        dc.setColor(COLOR_TEXT_AMBER, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon([
-            [x + 8, hy + 5],
-            [x + 5, hy + 10],
-            [x + 8, hy + 9],
-            [x + 6, hy + 14],
-            [x + 10, hy + 9],
-            [x + 8, hy + 9]
-        ]);
+        dc.setPenWidth(ICON_STROKE);
+        var paths = ICON_PATHS[iconType] as Lang.Array<Lang.Array<Lang.Array<Lang.Number> > >;
+        for (var i = 0; i < paths.size(); i++) {
+            drawIconPath(dc, x, y, paths[i]);
+        }
     }
 
-    private function drawBatteryIcon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, bat as Lang.Number, charging as Lang.Boolean, col as Lang.Number) as Void {
-        dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(1);
-        dc.drawRoundedRectangle(x, y, 15, 10, 3);
-        dc.fillRectangle(x + 15, y + 3, 3, 5);
+    private function drawIcon(dc as Graphics.Dc, x as Lang.Number, cy as Lang.Number,
+        iconType as Lang.Number, col as Lang.Number) as Void {
+        if (iconType == ICON_BATTERY) {
+            drawBatteryIcon(dc, x, cy - 5, getBatteryPercent(), isBatteryCharging(), col);
+        } else {
+            drawIconOutline(dc, x, cy - 7, iconType, col);
+        }
+    }
 
+    private function drawBatteryIcon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number,
+        bat as Lang.Number, charging as Lang.Boolean, col as Lang.Number) as Void {
+        drawIconOutline(dc, x, y, ICON_BATTERY, col);
         if (charging) {
-            dc.drawLine(x + 9, y + 1, x + 5, y + 5);
-            dc.drawLine(x + 5, y + 5, x + 10, y + 5);
-            dc.drawLine(x + 10, y + 5, x + 6, y + 9);
+            drawIconPath(dc, x, y, BATTERY_CHARGE_PATH);
         } else {
             var fillW = ((bat / 100.0) * 10).toNumber();
             if (fillW > 10) { fillW = 10; }
             if (fillW > 0) {
-                dc.fillRectangle(x + 3, y + 3, fillW, 5);
+                dc.fillRectangle(x + 2, y + 2, fillW, 6);
             }
         }
     }
 
-    private function drawCalendarIcon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, col as Lang.Number) as Void {
-        dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(1);
-        dc.drawRoundedRectangle(x, y + 3, 13, 10, 1);
-        dc.fillRectangle(x + 1, y + 3, 10, 3);
-        dc.drawLine(x + 3, y, x + 3, y + 4);
-        dc.drawLine(x + 9, y, x + 9, y + 4);
-        dc.drawPoint(x + 4, y + 8);
-        dc.drawPoint(x + 8, y + 8);
-    }
-
     private function drawBellIcon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, col as Lang.Number) as Void {
-        dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(1);
-        dc.drawArc(x + 6, y + 5, 5, Graphics.ARC_CLOCKWISE, 180, 0);
-        dc.drawLine(x + 1, y + 5, x, y + 9);
-        dc.drawLine(x + 11, y + 5, x + 13, y + 9);
-        dc.drawLine(x, y + 9, x + 13, y + 9);
-        dc.drawPoint(x + 6, y + 11);
+        drawIconOutline(dc, x, y, ICON_BELL, col);
     }
 
     private function drawNotificationIcon(dc as Graphics.Dc, x as Lang.Number, cy as Lang.Number, col as Lang.Number) as Void {
-        dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(1);
-        var my = cy - 5;
-        dc.drawRoundedRectangle(x - 6, my, 13, 9, 3);
-        dc.drawLine(x - 4, my + 9, x - 1, my + 11);
-        dc.drawLine(x - 1, my + 11, x - 1, my + 9);
+        drawIconOutline(dc, x - 6, cy - 5, ICON_NOTIFICATION, col);
     }
 
     private function drawBluetoothIcon(dc as Graphics.Dc, x as Lang.Number, cy as Lang.Number, col as Lang.Number) as Void {
-        dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(1);
-        dc.drawLine(x, cy - 8, x, cy + 8);
-        dc.drawLine(x - 4, cy - 4, x + 4, cy + 4);
-        dc.drawLine(x + 4, cy + 4, x, cy + 8);
-        dc.drawLine(x - 4, cy + 4, x + 4, cy - 4);
-        dc.drawLine(x + 4, cy - 4, x, cy - 8);
-    }
-
-    private function drawPhoneIcon(dc as Graphics.Dc, x as Lang.Number, cy as Lang.Number, col as Lang.Number) as Void {
-        dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(1);
-        dc.drawRoundedRectangle(x - 5, cy - 8, 10, 15, 3);
-        dc.fillRectangle(x - 3, cy - 5, 6, 9);
-        dc.drawPoint(x, cy + 5);
-    }
-
-    private function drawHazardIcon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, col as Lang.Number) as Void {
-        dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(1);
-        dc.fillPolygon([
-            [x + 6, y],
-            [x + 11, y + 10],
-            [x + 1, y + 10]
-        ]);
-        dc.setColor(COLOR_PLATE_BG, Graphics.COLOR_TRANSPARENT);
-        dc.drawPoint(x + 6, y + 5);
-        dc.drawPoint(x + 6, y + 8);
+        drawIconOutline(dc, x - 6, cy - 7, ICON_BLUETOOTH, col);
     }
 
     // =========================================================================
