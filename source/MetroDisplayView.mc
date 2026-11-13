@@ -18,11 +18,12 @@ import Toybox.Weather;
 //! Layout Structure:
 //! 1. Row 1 (Y: ~18-28, Center Y = 25): Centralized Battery icon + percentage at top
 //! 2. Row 2 (Y: ~42-57, Center Y = 49.5): Wider & taller glowing neon sunlight/ambient tube (116x15)
-//! 3. Row 3 (Y: 105-175, Center Y = 140): Centered 7-segment Nixie clock (HH:MM, 38x70), INS-1 colon bulbs, sub-script seconds on right (X=230, Y=162), side icons
-//! 4. Seamless Stepped Pyramid Grid (Y: 202-268, Zero gaps, shared 1px inner dividers, no outer border):
-//!    - Row A (Y: 202-224, Center Y = 213, 3 cells): Floors | Heart Rate | Weather & Feels-like
-//!    - Row B (Y: 224-246, Center Y = 235, 2 cells): Steps | Calories
-//!    - Row C (Y: 246-268, Center Y = 257, 1 cell): Body Battery (8-10px from bottom display edge)
+//!    Date (Center Y = 81): DD.MM.YY, WEEKDAY in muted amber above the clock
+//! 3. Row 3 (Y: 100-180, Center Y = 140): Centered 7-segment Nixie clock (HH:MM, 42x80), INS-1 colon bulbs, sub-script seconds on right (X=240, Y=167), side icons
+//! 4. Seamless Stepped Pyramid Grid (Y: 190-268, Zero gaps, shared 1px inner dividers, no outer border):
+//!    - Row A (Y: 190-216, Center Y = 203, 3 cells): Floors | Heart Rate | Weather & Feels-like
+//!    - Row B (Y: 216-242, Center Y = 229, 2 cells): Steps | Calories
+//!    - Row C (Y: 242-268, Center Y = 255, 1 cell): Body Battery (8-10px from bottom display edge)
 class MetroDisplayView extends WatchUi.WatchFace {
 
     // Metric Types Enum
@@ -65,7 +66,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
     private var _screenW as Lang.Number = SCREEN_W;
     private var _centerX as Lang.Number = CENTER_X;
 
-    // Centered 8-bit Nixie tube layout coordinates (Y: 105 - 175, Center Y = 140) - see ThemeConstants
+    // Centered Nixie tube layout (Y: 100-180, Center Y = 140) - see ThemeConstants
     private var _tubeW as Lang.Number = TUBE_W;
     private var _tubeH as Lang.Number = TUBE_H;
     private var _tubeY as Lang.Number = TUBE_Y;
@@ -146,26 +147,31 @@ class MetroDisplayView extends WatchUi.WatchFace {
     // Tactical Plates & Phosphor Text Colors
     static const COLOR_PLATE_BG        = 0x0C1410; // Dark stamped plate
     static const COLOR_PLATE_BORDER    = 0x24362A; // Single 1px border rim
-    static const COLOR_TEXT_AMBER      = 0xFFAA00; // Phosphor amber
-    static const COLOR_TEXT_ORANGE     = 0xFF7700; // Phosphor orange
-    static const COLOR_TEXT_GREEN      = 0x00FF88; // Phosphor electric green
-    static const COLOR_TEXT_CYAN       = 0x00D0FF; // Phosphor ice cyan
-    static const COLOR_TEXT_RED        = 0xFF3300; // Warning red
+    static const COLOR_TEXT_AMBER      = 0xD1A568; // Shared muted amber for date, metrics & status icons
+    static const COLOR_TEXT_DIM        = 0x34291A; // Dim amber for inactive indicators
 
     // Display Geometry (280x280 for fenix7x)
     static const SCREEN_W              = 280;
     static const CENTER_X              = 140;
 
-    // Centered 8-bit Nixie tube layout coordinates (Y: 105 - 175, Center Y = 140)
-    static const TUBE_W                = 38;
-    static const TUBE_H                = 70;
-    static const TUBE_Y                = 105;
-    static const TUBE_XS               = [54, 96, 146, 188];
+    // Larger tubes centered at (140, 140), clear of date, side icons and grid.
+    static const TUBE_W                = 42;
+    static const TUBE_H                = 80;
+    static const TUBE_Y                = 100;
+    static const TUBE_XS               = [44, 90, 148, 194];
 
     // Pre-allocated per-tube segment polygons & spine lines (zero GC allocations in onUpdate)
     private var _tubePolygons as Lang.Array<Lang.Array<Lang.Array<[Lang.Numeric, Lang.Numeric]> > >?;
     private var _tubeSpines as Lang.Array<Lang.Array<Lang.Array<Lang.Number> > >?;
     private var _digitsCache as Lang.Array<Lang.Number> = [0, 0, 0, 0];
+
+    // Gregorian FORMAT_SHORT weekdays are numbered Sunday (1) through Saturday (7).
+    private const DATE_WEEKDAYS = [
+        "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"
+    ];
+    private var _displayFont as Graphics.FontType = Graphics.FONT_SYSTEM_XTINY;
+    private var _dateKey as Lang.Number = -1;
+    private var _dateText as Lang.String = "";
 
     // State & Interactive Flags
     private var _isSleepMode as Lang.Boolean = false;
@@ -238,6 +244,8 @@ class MetroDisplayView extends WatchUi.WatchFace {
     function onLayout(dc as Graphics.Dc) as Void {
         _screenW = dc.getWidth();
         _centerX = _screenW / 2;
+        // Cache the bitmap font once per layout; no runtime font scaling.
+        _displayFont = WatchUi.loadResource(Rez.Fonts.MetroReadable) as WatchUi.FontResource;
 
         _tubeW = TUBE_W;
         _tubeH = TUBE_H;
@@ -250,10 +258,11 @@ class MetroDisplayView extends WatchUi.WatchFace {
             dc.setAntiAlias(true);
         }
 
-        var digitW = 26;
-        var digitH = 52;
-        var dxOff = (_tubeW - digitW) / 2; // 6
-        var dyOff = (_tubeH - digitH) / 2; // 9
+        // Scale the original 26x52 geometry once, keeping updates allocation-free.
+        var digitW = 32;
+        var digitH = 64;
+        var dxOff = (_tubeW - digitW) / 2; // 5
+        var dyOff = (_tubeH - digitH) / 2; // 8
 
         var tubePolys = new [4] as Lang.Array<Lang.Array<Lang.Array<[Lang.Numeric, Lang.Numeric]> > >;
         var tubeSp = new [4] as Lang.Array<Lang.Array<Lang.Array<Lang.Number> > >;
@@ -269,12 +278,20 @@ class MetroDisplayView extends WatchUi.WatchFace {
                 var basePoly = BASE_SEG_POLYGONS[s] as Lang.Array<Lang.Array<Lang.Number> >;
                 var poly = new [6] as Lang.Array<[Lang.Numeric, Lang.Numeric]>;
                 for (var p = 0; p < 6; p++) {
-                    poly[p] = [basePoly[p][0] + ox, basePoly[p][1] + oy];
+                    poly[p] = [
+                        ((basePoly[p][0] * digitW + 13) / 26).toNumber() + ox,
+                        ((basePoly[p][1] * digitH + 26) / 52).toNumber() + oy
+                    ];
                 }
                 segList[s] = poly;
 
                 var baseSp = BASE_SPINE_LINES[s] as Lang.Array<Lang.Number>;
-                spList[s] = [baseSp[0] + ox, baseSp[1] + oy, baseSp[2] + ox, baseSp[3] + oy];
+                spList[s] = [
+                    ((baseSp[0] * digitW + 13) / 26).toNumber() + ox,
+                    ((baseSp[1] * digitH + 26) / 52).toNumber() + oy,
+                    ((baseSp[2] * digitW + 13) / 26).toNumber() + ox,
+                    ((baseSp[3] * digitH + 26) / 52).toNumber() + oy
+                ];
             }
 
             tubePolys[t] = segList;
@@ -313,7 +330,10 @@ class MetroDisplayView extends WatchUi.WatchFace {
         // 3. Row 2: Wider & Taller Sunlight / Ambient Tube Directly Below Battery (Y: ~25-38, Center Y = 31)
         drawTopSunlightTube(dc, isSolarLampLit());
 
-        // 4. Row 3: Scaled Nixie Clock (HH:MM) + INS-1 Colon + Sub-script Seconds + Side Icons (Y: 48-114)
+        // Centered in the free space between the sunlight glow and Nixie tubes.
+        drawDate(dc);
+
+        // 4. Nixie Clock (HH:MM) + INS-1 Colon + Seconds + Side Icons (Y: 100-180)
         var clockTime = System.getClockTime();
         var hours = clockTime.hour;
         var minutes = clockTime.min;
@@ -367,6 +387,27 @@ class MetroDisplayView extends WatchUi.WatchFace {
         drawChassisBolts(dc);
     }
 
+    //! Refresh the formatted string only when the local calendar date changes.
+    private function drawDate(dc as Graphics.Dc) as Void {
+        var date = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+        var dateKey = date.year * 10000 + date.month * 100 + date.day;
+        if (dateKey != _dateKey) {
+            _dateText = Lang.format("$1$.$2$.$3$, $4$", [
+                date.day.format("%02d"),
+                date.month.format("%02d"),
+                (date.year % 100).format("%02d"),
+                DATE_WEEKDAYS[date.day_of_week - 1]
+            ]);
+            _dateKey = dateKey;
+        }
+
+        dc.setColor(COLOR_TEXT_AMBER, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(
+            _centerX, 81, _displayFont, _dateText,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+        );
+    }
+
     // =========================================================================
     // ROW 1: CENTRALIZED TOP BATTERY (Center Y = 25)
     // =========================================================================
@@ -376,23 +417,23 @@ class MetroDisplayView extends WatchUi.WatchFace {
         var charging = isBatteryCharging();
 
         var text = Lang.format("$1$%", [bat]);
-        var textW = dc.getTextWidthInPixels(text, Graphics.FONT_SYSTEM_XTINY);
+        var textW = dc.getTextWidthInPixels(text, _displayFont);
 
-        var iconW = 14;
+        var iconW = 18;
         var gap = 4;
         var totalW = iconW + gap + textW;
 
         var startX = _centerX - (totalW / 2);
         var cy = 25;
 
-        var col = charging ? COLOR_TEXT_GREEN : ((bat <= 20) ? COLOR_TEXT_RED : COLOR_TEXT_AMBER);
-        drawBatteryIcon(dc, startX, cy - 4, bat, charging, col);
+        var col = COLOR_TEXT_AMBER;
+        drawBatteryIcon(dc, startX, cy - 5, bat, charging, col);
 
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             startX + iconW + gap,
             cy,
-            Graphics.FONT_SYSTEM_XTINY,
+            _displayFont,
             text,
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
         );
@@ -553,12 +594,12 @@ class MetroDisplayView extends WatchUi.WatchFace {
 
     //! Sub-script seconds displayed on the RIGHT side of the minutes tubes, baseline aligned to bottom
     private function drawSubscriptSeconds(dc as Graphics.Dc, seconds as Lang.Number) as Void {
-        // Minutes tube right edge is at X = 226, bottom is at Y = 175. Gap = 4 px.
-        var x = 230;
-        var y = 162;
+        // Follow the enlarged minutes tube with the original 4 px gap/alignment.
+        var x = _tubeXs[3] + _tubeW + 4;
+        var y = _tubeY + _tubeH - 13;
 
         var secText = _isSleepMode ? "--" : seconds.format("%02d");
-        var secColor = _isSleepMode ? 0x332211 : COLOR_TEXT_AMBER;
+        var secColor = _isSleepMode ? 0x332211 : 0xFFAA00;
 
         dc.setColor(secColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
@@ -576,30 +617,25 @@ class MetroDisplayView extends WatchUi.WatchFace {
         var alarmCount = settings.alarmCount;
         var notifCount = settings.notificationCount;
 
-        // --- Left Side: Bluetooth + Dynamic Alarm Icon (Centered at Y: 140) ---
+        // --- Left Side: Bluetooth + Alarm Status (fixed positions) ---
         var bx = 32;
         var hasAlarm = (alarmCount != null && alarmCount > 0);
+        var colBt = isConnected ? COLOR_TEXT_AMBER : COLOR_TEXT_DIM;
+        var colAlarm = hasAlarm ? COLOR_TEXT_AMBER : COLOR_TEXT_DIM;
+        // Bluetooth spans Y=123-139; bell Y=143-154, clear of the clock at X=44.
+        // Read alarmCount on each normal update so changes need no extra timer.
+        drawBluetoothIcon(dc, bx, 131, colBt);
+        drawBellIcon(dc, bx - 6, 143, colAlarm);
 
-        if (hasAlarm) {
-            // Stacked vertically around Y = 140: Bluetooth at Y: 131, Alarm Bell at Y: 149
-            var colBt = isConnected ? COLOR_TEXT_CYAN : 0x222C32;
-            drawBluetoothIcon(dc, bx, 131, colBt);
-            drawBellIcon(dc, bx - 4, 144, COLOR_TEXT_AMBER);
-        } else {
-            // Centered Bluetooth at Y: 140
-            var colBt = isConnected ? COLOR_TEXT_CYAN : 0x222C32;
-            drawBluetoothIcon(dc, bx, 140, colBt);
-        }
-
-        // --- Right Side: Notification Status Icon (Moved to Y: 125, clear of seconds at Y: 162) ---
+        // --- Right Side: Notification Status Icon (Y=125, clear of seconds at Y=167) ---
         var px = 248;
         var py = 125;
         if (notifCount != null && notifCount > 0) {
-            drawNotificationIcon(dc, px, py, COLOR_TEXT_CYAN);
-            dc.setColor(COLOR_TEXT_CYAN, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(px + 4, py - 4, 2);
+            drawNotificationIcon(dc, px, py, COLOR_TEXT_AMBER);
+            dc.setColor(COLOR_TEXT_AMBER, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(px + 6, py - 6, 2);
         } else {
-            drawNotificationIcon(dc, px, py, 0x222C32);
+            drawNotificationIcon(dc, px, py, COLOR_TEXT_DIM);
         }
     }
 
@@ -608,9 +644,9 @@ class MetroDisplayView extends WatchUi.WatchFace {
     // =========================================================================
 
     private function drawSeamlessGrid(dc as Graphics.Dc, isSunlit as Lang.Boolean) as Void {
-        var ya = 202;
-        var yb = 224;
-        var yc = 246;
+        var ya = 190;
+        var yb = 216;
+        var yc = 242;
         var yd = 268;
 
         var xaL = 26;
@@ -644,21 +680,21 @@ class MetroDisplayView extends WatchUi.WatchFace {
         dc.drawLine(xcL, yc, xcR, yc);
 
         // 3. Render Cell Contents (mathematically centered)
-        var cyA = (ya + yb) / 2; // 213
-        var cyB = (yb + yc) / 2; // 235
-        var cyC = (yc + yd) / 2; // 257
+        var cyA = (ya + yb) / 2; // 203
+        var cyB = (yb + yc) / 2; // 229
+        var cyC = (yc + yd) / 2; // 255
 
         // Row A: 3 cells of 76 px
-        drawMetricFieldInPlate(dc, 64, cyA, _slotMidLeft, isSunlit);
-        drawMetricFieldInPlate(dc, 140, cyA, _slotMidCenter, isSunlit);
-        drawMetricFieldInPlate(dc, 216, cyA, _slotMidRight, isSunlit);
+        drawMetricFieldInPlate(dc, 64, cyA, _slotMidLeft, isSunlit, 76);
+        drawMetricFieldInPlate(dc, 140, cyA, _slotMidCenter, isSunlit, 76);
+        drawMetricFieldInPlate(dc, 216, cyA, _slotMidRight, isSunlit, 76);
 
         // Row B: 2 cells of 76 px
-        drawMetricFieldInPlate(dc, 102, cyB, _slotLowerLeft, isSunlit);
-        drawMetricFieldInPlate(dc, 178, cyB, _slotLowerRight, isSunlit);
+        drawMetricFieldInPlate(dc, 102, cyB, _slotLowerLeft, isSunlit, 76);
+        drawMetricFieldInPlate(dc, 178, cyB, _slotLowerRight, isSunlit, 76);
 
         // Row C: 1 cell of 72 px (centered at X=140)
-        drawMetricFieldInPlate(dc, 140, cyC, _slotBottom, isSunlit);
+        drawMetricFieldInPlate(dc, 140, cyC, _slotBottom, isSunlit, 72);
     }
 
     //! Draw metric icon + text strictly centered around (centerX, cy)
@@ -667,7 +703,8 @@ class MetroDisplayView extends WatchUi.WatchFace {
         centerX as Lang.Number,
         cy as Lang.Number,
         metricType as Lang.Number,
-        isSunlit as Lang.Boolean
+        isSunlit as Lang.Boolean,
+        cellWidth as Lang.Number
     ) as Void {
         if (metricType == METRIC_NONE) {
             return;
@@ -676,100 +713,108 @@ class MetroDisplayView extends WatchUi.WatchFace {
         var iconType = ICON_NONE;
         var text = "";
         var col = COLOR_TEXT_AMBER;
-        var iconW = 12;
+        var iconW = 15;
 
         switch (metricType) {
             case METRIC_ALTITUDE:
                 iconType = ICON_ALTITUDE;
                 text = getAltitudeString();
-                col = COLOR_TEXT_CYAN;
-                iconW = 14;
+                iconW = 18;
                 break;
 
             case METRIC_WEATHER:
                 iconType = ICON_WEATHER;
                 text = getWeatherString();
-                col = COLOR_TEXT_CYAN;
-                iconW = 13;
+                iconW = 16;
                 break;
 
             case METRIC_WEATHER_FEELS_LIKE:
                 iconType = ICON_WEATHER;
                 text = getWeatherFeelsLikeString();
-                col = COLOR_TEXT_CYAN;
-                iconW = 13;
+                iconW = 16;
                 break;
 
             case METRIC_CALORIES:
                 iconType = ICON_FLAME;
                 text = getCalories().format("%d");
-                col = COLOR_TEXT_ORANGE;
-                iconW = 12;
+                iconW = 15;
                 break;
 
             case METRIC_STEPS:
                 iconType = ICON_STEPS;
                 text = getSteps().format("%d");
-                col = COLOR_TEXT_GREEN;
-                iconW = 12;
+                iconW = 15;
                 break;
 
             case METRIC_HEART_RATE:
                 iconType = ICON_HEART;
                 var hr = getHeartRate();
                 text = (hr != null) ? hr.format("%d") : "--";
-                col = COLOR_TEXT_RED;
-                iconW = 13;
+                iconW = 16;
                 break;
 
             case METRIC_DISTANCE:
                 iconType = ICON_DISTANCE;
                 text = getDistanceString();
-                col = COLOR_TEXT_AMBER;
-                iconW = 11;
+                iconW = 14;
                 break;
 
             case METRIC_BODY_BATTERY:
                 iconType = ICON_VITALITY;
                 var bb = getBodyBattery();
                 text = (bb != null) ? bb.format("%d") + "%" : "--%";
-                col = COLOR_TEXT_GREEN;
-                iconW = 12;
+                iconW = 15;
                 break;
 
             case METRIC_BATTERY:
                 iconType = ICON_BATTERY;
                 text = getBatteryPercent().format("%d") + "%";
-                col = COLOR_TEXT_AMBER;
-                iconW = 14;
+                iconW = 18;
                 break;
 
             case METRIC_ACTIVE_MINUTES:
                 iconType = ICON_VITALITY;
                 text = getActiveMinutes().format("%d") + "m";
-                col = COLOR_TEXT_AMBER;
-                iconW = 12;
+                iconW = 15;
                 break;
 
             case METRIC_SUNRISE_SUNSET:
                 iconType = ICON_WEATHER;
                 text = getSunTimeString(isSunlit);
-                col = isSunlit ? COLOR_TEXT_AMBER : COLOR_TEXT_CYAN;
-                iconW = 13;
+                iconW = 16;
                 break;
 
             case METRIC_FLOORS:
                 iconType = ICON_STAIRS;
                 text = getFloors().format("%d"); // Plain number, no "f" suffix
-                col = COLOR_TEXT_GREEN;
-                iconW = 12;
+                iconW = 15;
                 break;
         }
 
-        // Value text font: consistent FONT_SYSTEM_XTINY for all cells
-        var font = Graphics.FONT_SYSTEM_XTINY;
+        // Prefer larger text, then fall back for long weather/distance readings.
+        var font = _displayFont;
         var textW = dc.getTextWidthInPixels(text, font);
-        var gap = 4;
+        var gap = 3;
+        var availableW = cellWidth - 4; // Keep 2 px clear of each divider.
+        if (iconW + gap + textW > availableW) {
+            font = Graphics.FONT_SYSTEM_XTINY;
+            textW = dc.getTextWidthInPixels(text, font);
+        }
+        if (iconW + gap + textW > availableW) {
+            // Give unusually long readings the full cell instead of overlapping.
+            iconType = ICON_NONE;
+            iconW = 0;
+            gap = 0;
+        }
+        if (textW > availableW) {
+            // Bound extreme values too; normal readings retain their full value.
+            var shortened = text;
+            do {
+                shortened = shortened.substring(0, shortened.length() - 1);
+                text = shortened + "...";
+                textW = dc.getTextWidthInPixels(text, font);
+            } while (textW > availableW && shortened.length() > 0);
+        }
         var totalW = iconW + gap + textW;
 
         var startX = centerX - (totalW / 2);
@@ -798,30 +843,30 @@ class MetroDisplayView extends WatchUi.WatchFace {
 
         switch (iconType) {
             case ICON_ALTITUDE:
-                // Mountain icon (14x11 px)
-                var my = cy - 5;
-                dc.drawLine(x, my + 10, x + 14, my + 10);
-                dc.drawLine(x + 1, my + 10, x + 5, my + 1);
-                dc.drawLine(x + 5, my + 1, x + 9, my + 10);
-                dc.drawLine(x + 8, my + 10, x + 11, my + 4);
-                dc.drawLine(x + 11, my + 4, x + 14, my + 10);
+                // Mountain icon (19x14 px)
+                var my = cy - 6;
+                dc.drawLine(x, my + 13, x + 18, my + 13);
+                dc.drawLine(x + 1, my + 13, x + 6, my + 1);
+                dc.drawLine(x + 6, my + 1, x + 11, my + 13);
+                dc.drawLine(x + 10, my + 13, x + 14, my + 5);
+                dc.drawLine(x + 14, my + 5, x + 18, my + 13);
                 break;
 
             case ICON_WEATHER:
-                // Cloud / Weather icon (13x10 px)
-                var wy = cy - 5;
-                dc.drawLine(x + 2, wy + 9, x + 11, wy + 9);
-                dc.drawCircle(x + 4, wy + 6, 3);
-                dc.drawCircle(x + 8, wy + 5, 4);
-                dc.drawPoint(x + 11, wy + 2);
+                // Cloud / Weather icon (16x14 px)
+                var wy = cy - 6;
+                dc.drawLine(x + 3, wy + 11, x + 14, wy + 11);
+                dc.drawCircle(x + 5, wy + 8, 4);
+                dc.drawCircle(x + 10, wy + 6, 5);
+                dc.drawPoint(x + 14, wy + 3);
                 break;
 
             case ICON_CALENDAR:
-                drawCalendarIcon(dc, x, cy - 5, col);
+                drawCalendarIcon(dc, x, cy - 6, col);
                 break;
 
             case ICON_BELL:
-                drawBellIcon(dc, x, cy - 5, col);
+                drawBellIcon(dc, x, cy - 6, col);
                 break;
 
             case ICON_BLUETOOTH:
@@ -833,80 +878,80 @@ class MetroDisplayView extends WatchUi.WatchFace {
                 break;
 
             case ICON_FLAME:
-                // Enlarged multi-point flame icon with licking tongue & hot inner core (12x14 px)
-                var fy = cy - 7;
-                dc.setColor(COLOR_TEXT_ORANGE, Graphics.COLOR_TRANSPARENT);
+                // Enlarged multi-point flame icon with licking tongue & inner core (15x17 px)
+                var fy = cy - 9;
+                dc.setColor(COLOR_TEXT_AMBER, Graphics.COLOR_TRANSPARENT);
                 dc.fillPolygon([
-                    [x + 5, fy],
-                    [x + 8, fy + 3],
-                    [x + 11, fy + 7],
-                    [x + 10, fy + 11],
-                    [x + 7, fy + 13],
-                    [x + 3, fy + 13],
-                    [x + 1, fy + 10],
-                    [x + 1, fy + 6],
-                    [x + 4, fy + 4],
-                    [x + 3, fy + 1]
+                    [x + 6, fy],
+                    [x + 10, fy + 4],
+                    [x + 14, fy + 9],
+                    [x + 13, fy + 14],
+                    [x + 9, fy + 16],
+                    [x + 4, fy + 16],
+                    [x + 1, fy + 13],
+                    [x + 1, fy + 8],
+                    [x + 5, fy + 5],
+                    [x + 4, fy + 1]
                 ]);
                 dc.setColor(COLOR_TEXT_AMBER, Graphics.COLOR_TRANSPARENT);
                 dc.fillPolygon([
-                    [x + 5, fy + 4],
-                    [x + 8, fy + 8],
-                    [x + 7, fy + 11],
-                    [x + 4, fy + 11],
-                    [x + 4, fy + 7]
+                    [x + 6, fy + 5],
+                    [x + 10, fy + 10],
+                    [x + 9, fy + 14],
+                    [x + 5, fy + 14],
+                    [x + 5, fy + 9]
                 ]);
                 break;
 
             case ICON_STEPS:
-                // Footsteps icon (12x12 px)
-                var sy = cy - 6;
-                dc.fillRoundedRectangle(x, sy + 4, 4, 7, 1);
-                dc.fillCircle(x + 2, sy + 2, 2);
-                dc.fillRoundedRectangle(x + 7, sy, 4, 7, 1);
-                dc.fillCircle(x + 9, sy + 9, 2);
+                // Footsteps icon (15x15 px)
+                var sy = cy - 8;
+                dc.fillRoundedRectangle(x, sy + 5, 5, 9, 1);
+                dc.fillCircle(x + 3, sy + 3, 3);
+                dc.fillRoundedRectangle(x + 9, sy, 5, 9, 1);
+                dc.fillCircle(x + 11, sy + 11, 3);
                 break;
 
             case ICON_HEART:
-                // Heart icon (13x11 px)
-                var hy = cy - 6;
-                dc.fillCircle(x + 3, hy + 3, 3);
-                dc.fillCircle(x + 9, hy + 3, 3);
+                // Heart icon (16x15 px)
+                var hy = cy - 8;
+                dc.fillCircle(x + 4, hy + 4, 4);
+                dc.fillCircle(x + 11, hy + 4, 4);
                 dc.fillPolygon([
-                    [x, hy + 3],
-                    [x + 12, hy + 3],
-                    [x + 6, hy + 11]
+                    [x, hy + 4],
+                    [x + 15, hy + 4],
+                    [x + 8, hy + 14]
                 ]);
                 break;
 
             case ICON_DISTANCE:
-                // Location / Route pin icon (11x12 px)
-                var dy = cy - 6;
-                dc.drawCircle(x + 5, dy + 4, 4);
-                dc.drawPoint(x + 5, dy + 4);
-                dc.drawLine(x + 1, dy + 5, x + 5, dy + 11);
-                dc.drawLine(x + 9, dy + 5, x + 5, dy + 11);
+                // Location / Route pin icon (14x15 px)
+                var dy = cy - 8;
+                dc.drawCircle(x + 6, dy + 5, 5);
+                dc.drawPoint(x + 6, dy + 5);
+                dc.drawLine(x + 1, dy + 6, x + 6, dy + 14);
+                dc.drawLine(x + 11, dy + 6, x + 6, dy + 14);
                 break;
 
             case ICON_VITALITY:
-                // Body Battery / Vitality human silhouette with energy core (12x14 px)
+                // Body Battery / Vitality human silhouette with energy core (15x18 px)
                 drawVitalityIcon(dc, x, cy, col);
                 break;
 
             case ICON_BATTERY:
-                drawBatteryIcon(dc, x, cy - 4, getBatteryPercent(), isBatteryCharging(), col);
+                drawBatteryIcon(dc, x, cy - 5, getBatteryPercent(), isBatteryCharging(), col);
                 break;
 
             case ICON_HAZARD:
-                drawHazardIcon(dc, x, cy - 5, col);
+                drawHazardIcon(dc, x, cy - 6, col);
                 break;
 
             case ICON_STAIRS:
-                // Ascending staircase icon (12x12 px)
-                var sty = cy - 6;
-                dc.fillRectangle(x, sty + 8, 3, 4);
-                dc.fillRectangle(x + 4, sty + 4, 3, 8);
-                dc.fillRectangle(x + 8, sty, 3, 12);
+                // Ascending staircase icon (15x15 px)
+                var sty = cy - 8;
+                dc.fillRectangle(x, sty + 10, 4, 5);
+                dc.fillRectangle(x + 5, sty + 5, 4, 10);
+                dc.fillRectangle(x + 10, sty, 4, 15);
                 break;
         }
     }
@@ -915,45 +960,45 @@ class MetroDisplayView extends WatchUi.WatchFace {
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
 
-        var hy = cy - 7;
+        var hy = cy - 9;
 
         // Head
-        dc.fillCircle(x + 6, hy + 2, 2);
+        dc.fillCircle(x + 8, hy + 3, 3);
 
         // Torso / shoulders silhouette
-        dc.drawLine(x + 1, hy + 5, x + 11, hy + 5);
-        dc.drawLine(x + 1, hy + 5, x + 2, hy + 11);
-        dc.drawLine(x + 11, hy + 5, x + 10, hy + 11);
-        dc.drawLine(x + 2, hy + 11, x + 6, hy + 13);
-        dc.drawLine(x + 10, hy + 11, x + 6, hy + 13);
+        dc.drawLine(x + 1, hy + 6, x + 14, hy + 6);
+        dc.drawLine(x + 1, hy + 6, x + 3, hy + 14);
+        dc.drawLine(x + 14, hy + 6, x + 13, hy + 14);
+        dc.drawLine(x + 3, hy + 14, x + 8, hy + 16);
+        dc.drawLine(x + 13, hy + 14, x + 8, hy + 16);
 
         // Glowing energy core inside chest
-        dc.setColor(COLOR_TEXT_GREEN, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(COLOR_TEXT_AMBER, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon([
-            [x + 6, hy + 4],
-            [x + 4, hy + 8],
-            [x + 6, hy + 7],
-            [x + 5, hy + 11],
-            [x + 8, hy + 7],
-            [x + 6, hy + 7]
+            [x + 8, hy + 5],
+            [x + 5, hy + 10],
+            [x + 8, hy + 9],
+            [x + 6, hy + 14],
+            [x + 10, hy + 9],
+            [x + 8, hy + 9]
         ]);
     }
 
     private function drawBatteryIcon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, bat as Lang.Number, charging as Lang.Boolean, col as Lang.Number) as Void {
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        dc.drawRoundedRectangle(x, y, 12, 8, 2);
-        dc.fillRectangle(x + 12, y + 2, 2, 4);
+        dc.drawRoundedRectangle(x, y, 15, 10, 3);
+        dc.fillRectangle(x + 15, y + 3, 3, 5);
 
         if (charging) {
-            dc.drawLine(x + 7, y + 1, x + 4, y + 4);
-            dc.drawLine(x + 4, y + 4, x + 8, y + 4);
-            dc.drawLine(x + 8, y + 4, x + 5, y + 7);
+            dc.drawLine(x + 9, y + 1, x + 5, y + 5);
+            dc.drawLine(x + 5, y + 5, x + 10, y + 5);
+            dc.drawLine(x + 10, y + 5, x + 6, y + 9);
         } else {
-            var fillW = ((bat / 100.0) * 8).toNumber();
-            if (fillW > 8) { fillW = 8; }
+            var fillW = ((bat / 100.0) * 10).toNumber();
+            if (fillW > 10) { fillW = 10; }
             if (fillW > 0) {
-                dc.fillRectangle(x + 2, y + 2, fillW, 4);
+                dc.fillRectangle(x + 3, y + 3, fillW, 5);
             }
         }
     }
@@ -961,66 +1006,66 @@ class MetroDisplayView extends WatchUi.WatchFace {
     private function drawCalendarIcon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, col as Lang.Number) as Void {
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        dc.drawRoundedRectangle(x, y + 2, 10, 8, 1);
-        dc.fillRectangle(x + 1, y + 2, 8, 2);
-        dc.drawLine(x + 2, y, x + 2, y + 3);
-        dc.drawLine(x + 7, y, x + 7, y + 3);
-        dc.drawPoint(x + 3, y + 6);
-        dc.drawPoint(x + 6, y + 6);
+        dc.drawRoundedRectangle(x, y + 3, 13, 10, 1);
+        dc.fillRectangle(x + 1, y + 3, 10, 3);
+        dc.drawLine(x + 3, y, x + 3, y + 4);
+        dc.drawLine(x + 9, y, x + 9, y + 4);
+        dc.drawPoint(x + 4, y + 8);
+        dc.drawPoint(x + 8, y + 8);
     }
 
     private function drawBellIcon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, col as Lang.Number) as Void {
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        dc.drawArc(x + 5, y + 4, 4, Graphics.ARC_CLOCKWISE, 180, 0);
-        dc.drawLine(x + 1, y + 4, x, y + 7);
-        dc.drawLine(x + 9, y + 4, x + 10, y + 7);
-        dc.drawLine(x, y + 7, x + 10, y + 7);
-        dc.drawPoint(x + 5, y + 9);
+        dc.drawArc(x + 6, y + 5, 5, Graphics.ARC_CLOCKWISE, 180, 0);
+        dc.drawLine(x + 1, y + 5, x, y + 9);
+        dc.drawLine(x + 11, y + 5, x + 13, y + 9);
+        dc.drawLine(x, y + 9, x + 13, y + 9);
+        dc.drawPoint(x + 6, y + 11);
     }
 
     private function drawNotificationIcon(dc as Graphics.Dc, x as Lang.Number, cy as Lang.Number, col as Lang.Number) as Void {
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        var my = cy - 4;
-        dc.drawRoundedRectangle(x - 5, my, 10, 7, 2);
-        dc.drawLine(x - 3, my + 7, x - 1, my + 9);
-        dc.drawLine(x - 1, my + 9, x - 1, my + 7);
+        var my = cy - 5;
+        dc.drawRoundedRectangle(x - 6, my, 13, 9, 3);
+        dc.drawLine(x - 4, my + 9, x - 1, my + 11);
+        dc.drawLine(x - 1, my + 11, x - 1, my + 9);
     }
 
     private function drawBluetoothIcon(dc as Graphics.Dc, x as Lang.Number, cy as Lang.Number, col as Lang.Number) as Void {
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        dc.drawLine(x, cy - 6, x, cy + 6);
-        dc.drawLine(x - 3, cy - 3, x + 3, cy + 3);
-        dc.drawLine(x + 3, cy + 3, x, cy + 6);
-        dc.drawLine(x - 3, cy + 3, x + 3, cy - 3);
-        dc.drawLine(x + 3, cy - 3, x, cy - 6);
+        dc.drawLine(x, cy - 8, x, cy + 8);
+        dc.drawLine(x - 4, cy - 4, x + 4, cy + 4);
+        dc.drawLine(x + 4, cy + 4, x, cy + 8);
+        dc.drawLine(x - 4, cy + 4, x + 4, cy - 4);
+        dc.drawLine(x + 4, cy - 4, x, cy - 8);
     }
 
     private function drawPhoneIcon(dc as Graphics.Dc, x as Lang.Number, cy as Lang.Number, col as Lang.Number) as Void {
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        dc.drawRoundedRectangle(x - 4, cy - 6, 8, 12, 2);
-        dc.fillRectangle(x - 2, cy - 4, 5, 7);
-        dc.drawPoint(x, cy + 4);
+        dc.drawRoundedRectangle(x - 5, cy - 8, 10, 15, 3);
+        dc.fillRectangle(x - 3, cy - 5, 6, 9);
+        dc.drawPoint(x, cy + 5);
     }
 
     private function drawHazardIcon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, col as Lang.Number) as Void {
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
         dc.fillPolygon([
-            [x + 5, y],
-            [x + 9, y + 8],
-            [x + 1, y + 8]
+            [x + 6, y],
+            [x + 11, y + 10],
+            [x + 1, y + 10]
         ]);
         dc.setColor(COLOR_PLATE_BG, Graphics.COLOR_TRANSPARENT);
-        dc.drawPoint(x + 5, y + 4);
-        dc.drawPoint(x + 5, y + 6);
+        dc.drawPoint(x + 6, y + 5);
+        dc.drawPoint(x + 6, y + 8);
     }
 
     // =========================================================================
-    // 7-SEGMENT NIXIE TUBE RENDERING (HH:MM AT Y: 105-175, W: 38, H: 70)
+    // 7-SEGMENT NIXIE TUBE RENDERING (HH:MM AT Y: 100-180, W: 42, H: 80)
     // =========================================================================
 
     private function drawNixieTube(
@@ -1113,7 +1158,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
 
     private function drawColonIndicator(dc as Graphics.Dc) as Void {
         var colonX = 140;
-        var bulbYCoords = [126, 154];
+        var bulbYCoords = [124, 156];
 
         for (var i = 0; i < 2; i++) {
             var cy = bulbYCoords[i];
