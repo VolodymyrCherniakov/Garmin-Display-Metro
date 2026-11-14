@@ -3,6 +3,7 @@ import Toybox.ActivityMonitor;
 import Toybox.Application;
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.Position;
 import Toybox.SensorHistory;
 import Toybox.System;
@@ -154,7 +155,11 @@ class MetroDisplayView extends WatchUi.WatchFace {
     // Display Geometry (280x280 for fenix7x)
     static const SCREEN_W              = 280;
     static const CENTER_X              = 140;
-    static const SIDE_ICON_INSET       = 20; // Symmetric anchors with room for notification dot
+    // Envelope includes the unread badge, 1px stroke/raster allowance and bell.
+    static const SIDE_ICON_EDGE_MARGIN = 8;
+    static const SIDE_ICON_OUTER_EXTENT = 9;
+    static const SIDE_ICON_Y_EXTENT = 25;
+    private var _sideIconInset as Lang.Number = 20;
 
     // Larger tubes centered at (140, 140), clear of date, side icons and grid.
     static const TUBE_W                = 42;
@@ -171,7 +176,14 @@ class MetroDisplayView extends WatchUi.WatchFace {
     private const DATE_WEEKDAYS = [
         "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"
     ];
+    private var _detailFont as Graphics.FontType = Graphics.FONT_SYSTEM_XTINY;
+    private var _compactFont as Graphics.FontType = Graphics.FONT_SYSTEM_XTINY;
     private var _displayFont as Graphics.FontType = Graphics.FONT_SYSTEM_XTINY;
+    // At Y=81 a 24px line fits safely inside the circular bezel at X=32..248,
+    // between the solar glow (through Y=60) and clock border (from Y=99).
+    private const DATE_CENTER_Y = 81;
+    private const DATE_MAX_WIDTH = 216;
+    private var _dateFont as Graphics.FontType = Graphics.FONT_SYSTEM_XTINY;
     private var _dateKey as Lang.Number = -1;
     private var _dateText as Lang.String = "";
 
@@ -248,6 +260,14 @@ class MetroDisplayView extends WatchUi.WatchFace {
         _centerX = _screenW / 2;
         // Cache the bitmap font once per layout; no runtime font scaling.
         _displayFont = WatchUi.loadResource(Rez.Fonts.MetroReadable) as WatchUi.FontResource;
+        _detailFont = WatchUi.loadResource(Rez.Fonts.MetroDetail) as WatchUi.FontResource;
+        _compactFont = WatchUi.loadResource(Rez.Fonts.MetroCompact) as WatchUi.FontResource;
+        // Compute once at layout time; both sides use the most restrictive envelope.
+        var radius = _screenW / 2;
+        var safeRadius = radius - SIDE_ICON_EDGE_MARGIN;
+        _sideIconInset = (radius - Math.sqrt(safeRadius * safeRadius -
+            SIDE_ICON_Y_EXTENT * SIDE_ICON_Y_EXTENT) + SIDE_ICON_OUTER_EXTENT).toNumber() + 1;
+        _dateKey = -1; // Refit after layout/font resources are reloaded.
 
         _tubeW = TUBE_W;
         _tubeH = TUBE_H;
@@ -389,23 +409,32 @@ class MetroDisplayView extends WatchUi.WatchFace {
         drawChassisBolts(dc);
     }
 
-    //! Refresh the formatted string only when the local calendar date changes.
+    //! Cache text and font until local midnight changes, including manual date changes.
     private function drawDate(dc as Graphics.Dc) as Void {
-        var date = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-        var dateKey = date.year * 10000 + date.month * 100 + date.day;
+        // Avoid Gregorian.Info and formatting allocations on ordinary redraws.
+        // Do not divide UTC seconds by 86400: the watch displays the local date.
+        var today = Time.today();
+        var dateKey = today.value();
         if (dateKey != _dateKey) {
+            var date = Gregorian.info(today, Time.FORMAT_SHORT);
             _dateText = Lang.format("$1$.$2$.$3$, $4$", [
                 date.day.format("%02d"),
                 date.month.format("%02d"),
                 (date.year % 100).format("%02d"),
                 DATE_WEEKDAYS[date.day_of_week - 1]
             ]);
+            _dateFont = _displayFont;
+            if (dc.getTextWidthInPixels(_dateText, _dateFont) > DATE_MAX_WIDTH) {
+                // Fenix 7X system XTINY supports the complete English date and
+                // fits even WEDNESDAY; retain the full format without truncation.
+                _dateFont = Graphics.FONT_SYSTEM_XTINY;
+            }
             _dateKey = dateKey;
         }
 
         dc.setColor(COLOR_TEXT_AMBER, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            _centerX, 81, _displayFont, _dateText,
+            _centerX, DATE_CENTER_Y, _dateFont, _dateText,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
     }
@@ -620,7 +649,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
         var notifCount = settings.notificationCount;
 
         // --- Left Side: Bluetooth + Alarm Status (fixed positions) ---
-        var bx = SIDE_ICON_INSET;
+        var bx = _sideIconInset;
         var hasAlarm = (alarmCount != null && alarmCount > 0);
         var colBt = isConnected ? COLOR_TEXT_AMBER : COLOR_TEXT_DIM;
         var colAlarm = hasAlarm ? COLOR_TEXT_AMBER : COLOR_TEXT_DIM;
@@ -630,7 +659,7 @@ class MetroDisplayView extends WatchUi.WatchFace {
         drawBellIcon(dc, bx - 6, 143, colAlarm);
 
         // --- Right Side: Notification Status Icon (Y=125, clear of seconds at Y=167) ---
-        var px = _screenW - SIDE_ICON_INSET;
+        var px = _screenW - _sideIconInset;
         var py = 125;
         if (notifCount != null && notifCount > 0) {
             drawNotificationIcon(dc, px, py, COLOR_TEXT_AMBER);
@@ -803,19 +832,24 @@ class MetroDisplayView extends WatchUi.WatchFace {
             textW = dc.getTextWidthInPixels(text, font);
         }
         if (iconW + gap + textW > availableW) {
-            // Give unusually long readings the full cell instead of overlapping.
-            iconType = ICON_NONE;
-            iconW = 0;
-            gap = 0;
+            font = _compactFont;
+            textW = dc.getTextWidthInPixels(text, font);
         }
-        if (textW > availableW) {
-            // Bound extreme values too; normal readings retain their full value.
-            var shortened = text;
-            do {
-                shortened = shortened.substring(0, shortened.length() - 1);
-                text = shortened + "...";
-                textW = dc.getTextWidthInPixels(text, font);
-            } while (textW > availableW && shortened.length() > 0);
+        if (iconW + gap + textW > availableW &&
+            (metricType == METRIC_STEPS || metricType == METRIC_CALORIES || metricType == METRIC_FLOORS)) {
+            var count = text.toNumber();
+            if (count >= 1000000) {
+                text = (count / 1000000.0).format("%.1f") + "M";
+            } else if (count >= 1000) {
+                text = (count / 1000.0).format("%.1f") + "k";
+            }
+            textW = dc.getTextWidthInPixels(text, font);
+        }
+        // Extreme readings get two short lines beside the icon, retaining all
+        // digits/units. No icon removal or ellipsis. This path is rarely needed.
+        if (iconW + gap + textW > availableW) {
+            drawLongMetric(dc, centerX, cy, iconType, iconW, text, availableW, col);
+            return;
         }
         var totalW = iconW + gap + textW;
 
@@ -833,6 +867,42 @@ class MetroDisplayView extends WatchUi.WatchFace {
             text,
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
         );
+    }
+
+    private function drawLongMetric(dc as Graphics.Dc, centerX as Lang.Number,
+        cy as Lang.Number, iconType as Lang.Number, iconW as Lang.Number,
+        text as Lang.String, availableW as Lang.Number, col as Lang.Number) as Void {
+        // Split at a measurement separator when possible (keep the separator).
+        var split = text.find("/");
+        if (split == null) { split = text.find(" "); }
+        if (split == null) { split = text.length() / 2 - 1; }
+        var first = text.substring(0, split + 1);
+        var second = text.substring(split + 1, text.length());
+        var w1 = dc.getTextWidthInPixels(first, _detailFont);
+        var w2 = dc.getTextWidthInPixels(second, _detailFont);
+        var width = w1 > w2 ? w1 : w2;
+        if (width > availableW - iconW - ICON_GAP) {
+            // Very long units/numbers: choose the most balanced full-text split.
+            for (var i = 1; i < text.length(); i++) {
+                var left = text.substring(0, i);
+                var right = text.substring(i, text.length());
+                var leftW = dc.getTextWidthInPixels(left, _detailFont);
+                var rightW = dc.getTextWidthInPixels(right, _detailFont);
+                var candidateW = leftW > rightW ? leftW : rightW;
+                if (candidateW < width) {
+                    first = left;
+                    second = right;
+                    width = candidateW;
+                }
+            }
+        }
+        var x = centerX - (iconW + ICON_GAP + width) / 2;
+        drawIcon(dc, x, cy, iconType, col);
+        dc.setColor(col, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x + iconW + ICON_GAP, cy - 6, _detailFont, first,
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.drawText(x + iconW + ICON_GAP, cy + 6, _detailFont, second,
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     // =========================================================================
