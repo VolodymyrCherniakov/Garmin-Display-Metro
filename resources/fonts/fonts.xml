@@ -1,3 +1,5 @@
 <fonts>
     <font id="MetroReadable" filename="metro-readable.fnt" antialias="false" />
+    <font id="MetroCompact" filename="metro-compact.fnt" antialias="false" />
+    <font id="MetroDetail" filename="metro-detail.fnt" antialias="false" />
 </fonts>
