@@ -872,36 +872,86 @@ class MetroDisplayView extends WatchUi.WatchFace {
     private function drawLongMetric(dc as Graphics.Dc, centerX as Lang.Number,
         cy as Lang.Number, iconType as Lang.Number, iconW as Lang.Number,
         text as Lang.String, availableW as Lang.Number, col as Lang.Number) as Void {
-        // Split at a measurement separator when possible (keep the separator).
+        var font = _detailFont;
+        var maxTextW = availableW - iconW - ICON_GAP;
+        // Only split between measurements or before a unit, never inside a number.
         var split = text.find("/");
         if (split == null) { split = text.find(" "); }
-        if (split == null) { split = text.length() / 2 - 1; }
-        var first = text.substring(0, split + 1);
-        var second = text.substring(split + 1, text.length());
-        var w1 = dc.getTextWidthInPixels(first, _detailFont);
-        var w2 = dc.getTextWidthInPixels(second, _detailFont);
+        var first = text;
+        var second = "";
+        if (split != null) {
+            first = text.substring(0, split + 1);
+            second = text.substring(split + 1, text.length());
+        }
+        var w1 = dc.getTextWidthInPixels(first, font);
+        var w2 = dc.getTextWidthInPixels(second, font);
         var width = w1 > w2 ? w1 : w2;
-        if (width > availableW - iconW - ICON_GAP) {
-            // Very long units/numbers: choose the most balanced full-text split.
-            for (var i = 1; i < text.length(); i++) {
-                var left = text.substring(0, i);
-                var right = text.substring(i, text.length());
-                var leftW = dc.getTextWidthInPixels(left, _detailFont);
-                var rightW = dc.getTextWidthInPixels(right, _detailFont);
-                var candidateW = leftW > rightW ? leftW : rightW;
-                if (candidateW < width) {
-                    first = left;
-                    second = right;
-                    width = candidateW;
+        var finalWidth = width;
+        if (finalWidth > maxTextW) {
+            // Measure alternatives rather than assuming the system font is smaller.
+            // Two lines are 12px apart in a 26px plate: taller fonts would overlap.
+            var candidates = [_compactFont, Graphics.FONT_SYSTEM_XTINY];
+            for (var i = 0; i < candidates.size(); i++) {
+                var candidate = candidates[i];
+                if (dc.getFontHeight(candidate) <= dc.getFontHeight(_detailFont)) {
+                    w1 = dc.getTextWidthInPixels(first, candidate);
+                    w2 = dc.getTextWidthInPixels(second, candidate);
+                    var candidateW = w1 > w2 ? w1 : w2;
+                    if (candidateW < width) {
+                        font = candidate;
+                        width = candidateW;
+                    }
                 }
             }
+            if (width > maxTextW) {
+                // Compact only oversized numeric tokens; keep their suffixes
+                // (units, degree signs and measurement separators) intact.
+                var lines = [first, second];
+                for (var line = 0; line < lines.size(); line++) {
+                    var value = lines[line];
+                    if (dc.getTextWidthInPixels(value, font) <= maxTextW) { continue; }
+                    var end = 0;
+                    while (end < value.length()) {
+                        var c = value.substring(end, end + 1);
+                        if ("0123456789.-".find(c) == null) { break; }
+                        end++;
+                    }
+                    var suffix = value.substring(end, value.length());
+                    if (end > 0) {
+                        var number = value.substring(0, end).toFloat();
+                        if (number != null && (number >= 1000 || number <= -1000)) {
+                            var divisor = 1000.0;
+                            var scale = "k";
+                            if (number >= 1000000 || number <= -1000000) {
+                                divisor = 1000000.0;
+                                scale = "M";
+                            }
+                            var compact = (number / divisor).format("%.1f") + scale + suffix;
+                            if (dc.getTextWidthInPixels(compact, font) <= maxTextW) {
+                                lines[line] = compact;
+                            }
+                        }
+                    }
+                    // An explicit out-of-range indication is safer than clipped
+                    // digits or a fabricated value; the icon remains visible.
+                    if (dc.getTextWidthInPixels(lines[line], font) > maxTextW) {
+                        var overflow = "OVF" + suffix;
+                        lines[line] = dc.getTextWidthInPixels(overflow, font) <= maxTextW ? overflow : "OVF";
+                    }
+                }
+                first = lines[0];
+                second = lines[1];
+            }
+            w1 = dc.getTextWidthInPixels(first, font);
+            w2 = dc.getTextWidthInPixels(second, font);
+            width = w1 > w2 ? w1 : w2;
         }
         var x = centerX - (iconW + ICON_GAP + width) / 2;
         drawIcon(dc, x, cy, iconType, col);
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x + iconW + ICON_GAP, cy - 6, _detailFont, first,
+        dc.drawText(x + iconW + ICON_GAP, cy - 6, font, first,
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.drawText(x + iconW + ICON_GAP, cy + 6, _detailFont, second,
+        dc.drawText(x + iconW + ICON_GAP, cy + 6, font, second,
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
